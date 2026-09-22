@@ -206,12 +206,14 @@
     background: #fff3cd;
     border: 2px solid #ffc107;
     border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 20px;
+    padding: 14px;
+    margin-bottom: 18px;
+    text-align: center;
   }
   .admin-panel h3 {
     color: #856404;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
   }
 </style>
 </head>
@@ -238,6 +240,14 @@
 
   <!-- 遊戲畫面 -->
   <div class="screen" id="game-screen">
+    <!-- 管理員面板（登入後立刻顯示） -->
+    <div id="admin-panel-game" class="admin-panel" style="display:none;">
+      <h3>管理員功能（kiehosocial@gmail.com）</h3>
+      <button class="btn btn-green" onclick="copyAllScores()">複製所有成績</button>
+      <button class="btn btn-red" onclick="resetAllScores()">清除所有成績</button>
+      <button class="btn btn-orange" onclick="goToLeaderboard()">查看排行榜</button>
+    </div>
+
     <div class="center">
       <div class="score-box">
         <span id="display-email">-</span>　｜　分數：<span id="score">0</span> / 100　｜　關卡 <span id="level-num">1</span>/5
@@ -258,12 +268,10 @@
       <p id="rank-text" style="margin-bottom:18px;"></p>
     </div>
 
-    <!-- 管理員專用面板 -->
-    <div id="admin-panel" class="admin-panel" style="display:none;">
-      <h3>管理員功能（kiehosocial@gmail.com）</h3>
-      <p style="margin-bottom:12px; color:#856404;">你可以查看與重置本機所有成績</p>
+    <div id="admin-panel-end" class="admin-panel" style="display:none;">
+      <h3>管理員功能</h3>
       <button class="btn btn-green" onclick="copyAllScores()">複製所有成績</button>
-      <button class="btn btn-red" onclick="resetAllScores()">清除所有成績（重置）</button>
+      <button class="btn btn-red" onclick="resetAllScores()">清除所有成績</button>
     </div>
 
     <h3 style="text-align:center; margin-bottom:10px;">本機排行榜</h3>
@@ -283,7 +291,6 @@
     </div>
 
     <div class="center" style="margin-top:16px;">
-      <button class="btn btn-green" id="normal-copy-btn" onclick="copyAllScores()">複製所有成績</button>
       <button class="btn btn-orange" onclick="signOut()">登出</button>
     </div>
 
@@ -302,9 +309,9 @@
 const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.googleusercontent.com";
 // ========================================================
 
-const ADMIN_EMAIL = "kiehosocial@gmail.com";   // 管理員帳號
-const STORAGE_KEY = "is_game_progress_v15";
-const LEADERBOARD_KEY = "is_game_leaderboard_v15";
+const ADMIN_EMAIL = "kiehosocial@gmail.com";
+const STORAGE_KEY = "is_game_progress_v16";
+const LEADERBOARD_KEY = "is_game_leaderboard_v16";
 
 const levelsTemplate = [
   {
@@ -431,7 +438,6 @@ function handleCredentialResponse(response) {
 
   const progress = getProgress();
 
-  // 管理員可以直接進入，不強制完成限制
   if (!isAdmin && progress && progress.completed) {
     document.getElementById("login-status").innerHTML = 
       `<p style="color:#c0392b; margin-top:16px;">此 Google 帳號已經完成過測驗，無法再次作答。</p>`;
@@ -441,6 +447,11 @@ function handleCredentialResponse(response) {
   document.getElementById("login-screen").classList.remove("active");
   document.getElementById("game-screen").classList.add("active");
   document.getElementById("display-email").textContent = userEmail + (isAdmin ? "（管理員）" : "");
+
+  // 立刻顯示管理員面板
+  if (isAdmin) {
+    document.getElementById("admin-panel-game").style.display = "block";
+  }
 
   prepareLevels();
 
@@ -693,13 +704,8 @@ function endGame() {
   document.getElementById("final-time").textContent = timeStr;
   document.getElementById("progress").style.width = "100%";
 
-  // 顯示管理員面板
   if (isAdmin) {
-    document.getElementById("admin-panel").style.display = "block";
-    document.getElementById("normal-copy-btn").style.display = "none";
-  } else {
-    document.getElementById("admin-panel").style.display = "none";
-    document.getElementById("normal-copy-btn").style.display = "inline-block";
+    document.getElementById("admin-panel-end").style.display = "block";
   }
 
   let rankMsg = "";
@@ -758,6 +764,19 @@ function resetAllScores() {
   localStorage.removeItem(STORAGE_KEY);
   
   alert("已清除所有成績與進度！");
+  renderLeaderboard();
+}
+
+function goToLeaderboard() {
+  // 直接跳到結束畫面查看排行榜
+  document.getElementById("game-screen").classList.remove("active");
+  document.getElementById("end-screen").classList.add("active");
+  document.getElementById("final-score").textContent = "-";
+  document.getElementById("final-time").textContent = "--";
+  document.getElementById("rank-text").textContent = "管理員查看模式";
+  if (isAdmin) {
+    document.getElementById("admin-panel-end").style.display = "block";
+  }
   renderLeaderboard();
 }
 
