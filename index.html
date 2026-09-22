@@ -175,22 +175,6 @@
     color: #dc3545;
     margin: 10px 0;
   }
-  .input-group {
-    margin: 18px 0;
-    text-align: left;
-  }
-  .input-group label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 600;
-  }
-  .input-group input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    font-size: 1.1rem;
-  }
   .leaderboard {
     max-height: 340px;
     overflow-y: auto;
@@ -249,7 +233,7 @@
   <div class="screen" id="game-screen">
     <div class="center">
       <div class="score-box">
-        <span id="display-email">-</span>　｜　分數：<span id="score">0</span>　｜　關卡 <span id="level-num">1</span>/4
+        <span id="display-email">-</span>　｜　分數：<span id="score">0</span>　｜　關卡 <span id="level-num">1</span>/5
       </div>
     </div>
     <div id="question-area"></div>
@@ -288,6 +272,7 @@
       <p><strong>五大組成：</strong>硬件、軟件、數據、人、程序（互相依賴）</p>
       <p><strong>數據 vs 資訊：</strong>數據是原始事實，資訊是處理後有意義的結果</p>
       <p><strong>IPO：</strong>輸入 → 處理 → 輸出</p>
+      <p><strong>數據驗證：</strong>Garbage In, Garbage Out（無用輸入，無用輸出）。輸入的準確性決定輸出品質。</p>
     </div>
 
     <div class="center" style="margin-top:20px;">
@@ -298,13 +283,13 @@
 
 <script>
 // ========== 請把下面這行換成你的 Google Client ID ==========
-const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
 // ========================================================
 
-const STORAGE_KEY = "is_game_progress_v10";
-const LEADERBOARD_KEY = "is_game_leaderboard_v10";
+const STORAGE_KEY = "is_game_progress_v11";
+const LEADERBOARD_KEY = "is_game_leaderboard_v11";
 
-// 題庫
+// 題庫（已加入數據驗證關卡）
 const levelsTemplate = [
   {
     title: "第1關：資訊系統組成部分",
@@ -371,6 +356,46 @@ const levelsTemplate = [
       { type: "mc", q: "在學校的成績系統中，「負責維護系統並設定使用權限的老師」最接近哪一個組成部分？", options: ["硬件", "軟件", "人", "數據"], answer: 2, explain: "負責管理與使用系統的人員屬於「人」。" },
       { type: "mc", q: "「人」在資訊系統中的角色是？", options: ["只負責鍵入資料", "使用者和管理者", "只負責寫程式", "可有可無"], answer: 1, explain: "人是系統的使用者與管理者，非常重要。" }
     ]
+  },
+  {
+    title: "第5關：數據驗證",
+    questions: [
+      {
+        type: "mc",
+        q: "如果在網上預約時填寫了錯誤的證件號碼，最可能發生什麼事？",
+        options: ["預約仍然有效", "預約可能無效或需要重新預約", "系統會自動修正號碼", "不會有任何影響"],
+        answer: 1,
+        explain: "錯誤的資料會導致預約無效，需要重新辦理。"
+      },
+      {
+        type: "mc",
+        q: "「Garbage In, Garbage Out」這句話的意思是？",
+        options: ["輸入垃圾會得到垃圾輸出", "電腦會自動清理垃圾資料", "輸出品質與輸入無關", "只能輸入文字資料"],
+        answer: 0,
+        explain: "輸入的準確性或品質會直接決定輸出的結果。"
+      },
+      {
+        type: "mc",
+        q: "為什麼數據驗證很重要？",
+        options: ["可以讓網頁看起來比較美觀", "確保輸入資料正確，避免產生無用或錯誤的輸出", "可以加快電腦運算速度", "只是為了增加表單欄位"],
+        answer: 1,
+        explain: "輸入的準確性決定輸出的品質，驗證可減少錯誤。"
+      },
+      {
+        type: "mc",
+        q: "設計表單時，下列哪一項有助於避免無效輸入？",
+        options: ["讓使用者自由輸入任何內容", "提供下拉選單、格式提示或即時檢查", "完全不給任何提示", "只接受英文輸入"],
+        answer: 1,
+        explain: "透過限制輸入方式或即時驗證，可有效減少錯誤資料。"
+      },
+      {
+        type: "mc",
+        q: "賽跑計時時，如果工作人員把 12\"62 錯誤輸入成 12\"26，最後排名可能會？",
+        options: ["完全不受影響", "出現錯誤的排名結果", "系統自動修正", "只影響顯示顏色"],
+        answer: 1,
+        explain: "這就是典型的「無用輸入，無用輸出」例子。"
+      }
+    ]
   }
 ];
 
@@ -400,7 +425,6 @@ function shuffleArray(arr) {
 }
 
 function prepareLevels() {
-  // 每一關的題目都隨機打亂
   levels = levelsTemplate.map(level => ({
     title: level.title,
     questions: shuffleArray(level.questions)
@@ -427,7 +451,6 @@ function saveProgress(data) {
 }
 
 function handleCredentialResponse(response) {
-  // 解析 JWT（僅前端使用，非正式安全驗證）
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   userEmail = payload.email;
   userName = payload.name || payload.email;
@@ -440,7 +463,6 @@ function handleCredentialResponse(response) {
     return;
   }
 
-  // 開始或繼續
   document.getElementById("login-screen").classList.remove("active");
   document.getElementById("game-screen").classList.add("active");
   document.getElementById("display-email").textContent = userEmail;
@@ -448,7 +470,6 @@ function handleCredentialResponse(response) {
   prepareLevels();
 
   if (progress && !progress.completed) {
-    // 繼續上次進度
     currentLevel = progress.currentLevel || 0;
     currentQ = progress.currentQ || 0;
     score = progress.score || 0;
@@ -517,7 +538,6 @@ function showQuestion() {
   placedCount = 0;
   if (countdownTimer) clearInterval(countdownTimer);
 
-  // 儲存目前進度
   saveProgress({
     completed: false,
     currentLevel,
@@ -544,7 +564,6 @@ function showQuestion() {
     area.innerHTML = html;
     renderDragMatch(q);
   } else {
-    // 選項隨機打亂
     let shuffled = q.options.map((text, originalIndex) => ({ text, originalIndex }));
     shuffled = shuffleArray(shuffled);
 
@@ -707,7 +726,6 @@ function endGame() {
   const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
   const timeStr = formatTime(elapsedSeconds);
 
-  // 標記為已完成
   saveProgress({
     completed: true,
     score,
@@ -715,7 +733,6 @@ function endGame() {
     finishTime: new Date().toLocaleString("zh-TW")
   });
 
-  // 寫入排行榜
   const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
   records.push({
     email: userEmail,
@@ -735,9 +752,9 @@ function endGame() {
   document.getElementById("progress").style.width = "100%";
 
   let rankMsg = "";
-  if (score >= 130) rankMsg = "太強了！你已經完全掌握資訊系統概念！";
-  else if (score >= 90) rankMsg = "很不錯！再複習一下細節會更完美。";
-  else if (score >= 50) rankMsg = "及格了！建議再看一次重點複習卡。";
+  if (score >= 150) rankMsg = "太強了！你已經完全掌握資訊系統與數據驗證概念！";
+  else if (score >= 110) rankMsg = "很不錯！再複習一下細節會更完美。";
+  else if (score >= 70) rankMsg = "及格了！建議再看一次重點複習卡。";
   else rankMsg = "加油！多練習幾次就會進步。";
   document.getElementById("rank-text").textContent = rankMsg;
 
