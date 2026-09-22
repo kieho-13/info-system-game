@@ -268,10 +268,10 @@
 
     <div class="review-card" style="margin-top:20px;">
       <h3>重點複習卡</h3>
-      <p><strong>五大組成：</strong>硬件、軟件、數據、人、程序（互相依賴）</p>
+      <p><strong>五大組成：</strong>硬件、軟件、數據、人、程序</p>
       <p><strong>數據 vs 資訊：</strong>數據是原始事實，資訊是處理後有意義的結果</p>
       <p><strong>IPO：</strong>輸入 → 處理 → 輸出</p>
-      <p><strong>數據驗證：</strong>Garbage In, Garbage Out（無用輸入，無用輸出）</p>
+      <p><strong>數據驗證：</strong>Garbage In, Garbage Out。常見方法包括存在檢查、範圍檢查、類型檢查、格式檢查、長度檢查、清單檢查等。</p>
     </div>
   </div>
 </div>
@@ -281,10 +281,9 @@
 const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.googleusercontent.com";
 // ========================================================
 
-const STORAGE_KEY = "is_game_progress_v13";
-const LEADERBOARD_KEY = "is_game_leaderboard_v13";
+const STORAGE_KEY = "is_game_progress_v14";
+const LEADERBOARD_KEY = "is_game_leaderboard_v14";
 
-// 題庫
 const levelsTemplate = [
   {
     title: "第1關：資訊系統組成部分",
@@ -300,27 +299,9 @@ const levelsTemplate = [
           { left: "程序", right: "將數據轉化為資訊的規則與流程" }
         ]
       },
-      {
-        type: "mc",
-        q: "情境：圖書館用條碼掃描器掃描書本並記錄借出時間。條碼掃描器屬於？",
-        options: ["硬件", "軟件", "數據", "程序"],
-        answer: 0,
-        explain: "掃描器是實體裝置，屬於硬件。"
-      },
-      {
-        type: "mc",
-        q: "老師用 Excel 計算全班平均分。Excel 屬於？",
-        options: ["硬件", "軟件", "數據", "人"],
-        answer: 1,
-        explain: "Excel 是應用程式，屬於軟件。"
-      },
-      {
-        type: "mc",
-        q: "管理員設定「逾期超過7天不能再借書」的規則。這屬於？",
-        options: ["硬件", "軟件", "數據", "程序"],
-        answer: 3,
-        explain: "規則與處理流程屬於程序。"
-      }
+      { type: "mc", q: "圖書館用條碼掃描器掃描書本。條碼掃描器屬於？", options: ["硬件", "軟件", "數據", "程序"], answer: 0, explain: "掃描器是實體裝置，屬於硬件。" },
+      { type: "mc", q: "老師用 Excel 計算全班平均分。Excel 屬於？", options: ["硬件", "軟件", "數據", "人"], answer: 1, explain: "Excel 是應用程式，屬於軟件。" },
+      { type: "mc", q: "管理員設定「逾期超過7天不能再借書」的規則。這屬於？", options: ["硬件", "軟件", "數據", "程序"], answer: 3, explain: "規則與處理流程屬於程序。" }
     ]
   },
   {
@@ -329,77 +310,111 @@ const levelsTemplate = [
       { type: "mc", q: "「某公司的淨收入」屬於？", options: ["數據", "資訊"], answer: 0, explain: "淨收入是原始數字，屬於數據。" },
       { type: "mc", q: "「公司淨收入成長率」屬於？", options: ["數據", "資訊"], answer: 1, explain: "成長率是經過計算後的結果，屬於資訊。" },
       { type: "mc", q: "「高一班學生身高列表」屬於？", options: ["數據", "資訊"], answer: 0, explain: "原始身高數字是數據。" },
-      { type: "mc", q: "「高一班最高學生的姓名」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過排序比較後得出的結果是資訊。" },
+      { type: "mc", q: "「高一班最高學生的姓名」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過比較後得出的結果是資訊。" },
       { type: "mc", q: "「一張真實的貓咪照片」屬於？", options: ["數據", "資訊"], answer: 0, explain: "原始影像是數據。" },
-      { type: "mc", q: "「真實照片中的貓的數量」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過影像辨識後得到的數量是資訊。" }
+      { type: "mc", q: "「真實照片中的貓的數量」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過辨識後得到的數量是資訊。" }
     ]
   },
   {
     title: "第3關：IPO 循環",
     questions: [
       { type: "mc", q: "IPO 循環的正確順序是？", options: ["處理 → 輸入 → 輸出", "輸入 → 處理 → 輸出", "輸出 → 處理 → 輸入", "輸入 → 輸出 → 處理"], answer: 1, explain: "標準流程是輸入 → 處理 → 輸出。" },
-      { type: "mc", q: "在成績管理系統中，學生把考試分數鍵入電腦，這個動作屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 0, explain: "把資料送進系統的動作屬於輸入階段。" },
-      { type: "mc", q: "系統自動計算全班平均分，並製成長條圖，這個過程屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 1, explain: "計算與產生圖表屬於處理階段。" },
-      { type: "mc", q: "把整理好的成績報表列印出來交給老師，這個動作屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 2, explain: "把結果呈現給使用者屬於輸出階段。" }
+      { type: "mc", q: "學生把考試分數鍵入電腦，這個動作屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 0, explain: "把資料送進系統屬於輸入階段。" },
+      { type: "mc", q: "系統計算全班平均分並製成長條圖，這屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 1, explain: "計算與產生圖表屬於處理階段。" },
+      { type: "mc", q: "把成績報表列印出來交給老師，這屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 2, explain: "把結果呈現給使用者屬於輸出階段。" }
     ]
   },
   {
     title: "第4關：綜合挑戰",
     questions: [
-      { type: "mc", q: "如果一個資訊系統缺少「程序」，會發生什麼事？", options: ["硬體無法啟動", "無法將數據轉成有用資訊", "沒有人可以使用", "軟件會自動消失"], answer: 1, explain: "程序定義如何處理數據，缺少它就無法產生有意義的資訊。" },
+      { type: "mc", q: "如果一個資訊系統缺少「程序」，會發生什麼事？", options: ["硬體無法啟動", "無法將數據轉成有用資訊", "沒有人可以使用", "軟件會自動消失"], answer: 1, explain: "程序定義如何處理數據。" },
       { type: "mc", q: "「數據一定是數字」這句話正確嗎？", options: ["正確", "錯誤"], answer: 1, explain: "錯誤。文字、圖片、聲音等也是數據。" },
-      { type: "mc", q: "在學校的成績系統中，「負責維護系統並設定使用權限的老師」最接近哪一個組成部分？", options: ["硬件", "軟件", "人", "數據"], answer: 2, explain: "負責管理與使用系統的人員屬於「人」。" },
-      { type: "mc", q: "「人」在資訊系統中的角色是？", options: ["只負責鍵入資料", "使用者和管理者", "只負責寫程式", "可有可無"], answer: 1, explain: "人是系統的使用者與管理者，非常重要。" }
+      { type: "mc", q: "負責維護系統並設定權限的老師，最接近哪個組成部分？", options: ["硬件", "軟件", "人", "數據"], answer: 2, explain: "屬於「人」。" },
+      { type: "mc", q: "「人」在資訊系統中的角色是？", options: ["只負責鍵入資料", "使用者和管理者", "只負責寫程式", "可有可無"], answer: 1, explain: "人是使用者與管理者。" }
     ]
   },
   {
-    title: "第5關：數據驗證",
+    title: "第5關：數據驗證（重點加強）",
     questions: [
       {
         type: "mc",
         q: "如果在網上預約時填寫了錯誤的證件號碼，最可能發生什麼事？",
         options: ["預約仍然有效", "預約可能無效或需要重新預約", "系統會自動修正號碼", "不會有任何影響"],
         answer: 1,
-        explain: "錯誤的資料會導致預約無效，需要重新辦理。"
+        explain: "錯誤資料會導致預約無效。"
       },
       {
         type: "mc",
-        q: "「Garbage In, Garbage Out」這句話的意思是？",
-        options: ["輸入垃圾會得到垃圾輸出", "電腦會自動清理垃圾資料", "輸出品質與輸入無關", "只能輸入文字資料"],
+        q: "「Garbage In, Garbage Out」的意思是？",
+        options: ["輸入垃圾會得到垃圾輸出", "電腦會自動清理垃圾資料", "輸出品質與輸入無關", "只能輸入文字"],
         answer: 0,
-        explain: "輸入的準確性或品質會直接決定輸出的結果。"
+        explain: "輸入的準確性直接影響輸出品質。"
       },
       {
         type: "mc",
-        q: "為什麼數據驗證很重要？",
-        options: ["可以讓網頁看起來比較美觀", "確保輸入資料正確，避免產生無用或錯誤的輸出", "可以加快電腦運算速度", "只是為了增加表單欄位"],
+        q: "檢查使用者是否有填寫必填欄位，這種驗證方法稱為？",
+        options: ["範圍檢查", "存在檢查（Presence Check）", "格式檢查", "類型檢查"],
         answer: 1,
-        explain: "輸入的準確性決定輸出的品質，驗證可減少錯誤。"
+        explain: "存在檢查用來確認資料有被輸入。"
       },
       {
         type: "mc",
-        q: "設計表單時，下列哪一項有助於避免無效輸入？",
-        options: ["讓使用者自由輸入任何內容", "提供下拉選單、格式提示或即時檢查", "完全不給任何提示", "只接受英文輸入"],
+        q: "限制年齡必須介於 1 到 120 之間，這是哪一種驗證？",
+        options: ["存在檢查", "範圍檢查（Range Check）", "格式檢查", "長度檢查"],
         answer: 1,
-        explain: "透過限制輸入方式或即時驗證，可有效減少錯誤資料。"
+        explain: "範圍檢查限制數值的上下限。"
       },
       {
         type: "mc",
-        q: "賽跑計時時，如果工作人員把 12\"62 錯誤輸入成 12\"26，最後排名可能會？",
-        options: ["完全不受影響", "出現錯誤的排名結果", "系統自動修正", "只影響顯示顏色"],
+        q: "要求電話號碼必須是數字，這是哪一種驗證？",
+        options: ["存在檢查", "範圍檢查", "類型檢查（Type Check）", "清單檢查"],
+        answer: 2,
+        explain: "類型檢查確認資料類型是否正確。"
+      },
+      {
+        type: "mc",
+        q: "要求電郵地址必須包含 @ 符號，這是哪一種驗證？",
+        options: ["存在檢查", "範圍檢查", "格式檢查（Format Check）", "長度檢查"],
+        answer: 2,
+        explain: "格式檢查確認資料符合特定格式。"
+      },
+      {
+        type: "mc",
+        q: "限制密碼長度必須在 8 到 16 個字元之間，這是？",
+        options: ["存在檢查", "範圍檢查", "格式檢查", "長度檢查（Length Check）"],
+        answer: 3,
+        explain: "長度檢查限制字元數量。"
+      },
+      {
+        type: "mc",
+        q: "性別只能選擇「男」或「女」，這是哪一種驗證？",
+        options: ["存在檢查", "範圍檢查", "類型檢查", "清單檢查（List / Lookup Check）"],
+        answer: 3,
+        explain: "清單檢查限制只能從預設選項中選擇。"
+      },
+      {
+        type: "mc",
+        q: "設計表單時，下列哪項最有助於減少無效輸入？",
+        options: ["讓使用者自由輸入任何內容", "提供下拉選單、提示文字或即時檢查", "完全不給提示", "只接受英文"],
         answer: 1,
-        explain: "這就是典型的「無用輸入，無用輸出」例子。"
+        explain: "良好的介面設計可有效減少錯誤輸入。"
+      },
+      {
+        type: "mc",
+        q: "賽跑計時時把 12\"62 錯誤輸入成 12\"26，最後排名出錯，這說明了什麼？",
+        options: ["電腦計算能力不足", "無用輸入會導致無用輸出", "只是顯示問題", "與數據驗證無關"],
+        answer: 1,
+        explain: "典型的 Garbage In, Garbage Out 例子。"
       }
     ]
   }
 ];
 
-// 計分設定（滿分 100）
-const MATCH_FULL_SCORE = 20;
-const MATCH_PARTIAL = 4;
+// 計分（滿分約 100）
+const MATCH_FULL_SCORE = 16;
+const MATCH_PARTIAL = 3;
 const MC_SCORE = 4;
 
-// 遊戲狀態
 let levels = [];
 let currentLevel = 0;
 let currentQ = 0;
@@ -433,7 +448,7 @@ function prepareLevels() {
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 }
 
 function getProgress() {
@@ -452,7 +467,6 @@ function handleCredentialResponse(response) {
   userEmail = payload.email;
 
   const progress = getProgress();
-
   if (progress && progress.completed) {
     document.getElementById("login-status").innerHTML = 
       `<p style="color:#c0392b; margin-top:16px;">此 Google 帳號已經完成過測驗，無法再次作答。</p>`;
@@ -475,13 +489,7 @@ function handleCredentialResponse(response) {
     currentQ = 0;
     score = 0;
     startTime = Date.now();
-    saveProgress({
-      completed: false,
-      currentLevel: 0,
-      currentQ: 0,
-      score: 0,
-      startTime: startTime
-    });
+    saveProgress({ completed: false, currentLevel: 0, currentQ: 0, score: 0, startTime });
   }
 
   updateScore();
@@ -494,12 +502,10 @@ function initGoogle() {
       `<p style="color:#c0392b;">請先在程式碼中設定正確的 Google Client ID</p>`;
     return;
   }
-
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleCredentialResponse
   });
-
   google.accounts.id.renderButton(
     document.getElementById("google-btn-container"),
     { theme: "outline", size: "large", text: "signin_with", shape: "rectangular" }
@@ -524,13 +530,7 @@ function showQuestion() {
   isMatchChecked = false;
   placedCount = 0;
 
-  saveProgress({
-    completed: false,
-    currentLevel,
-    currentQ,
-    score,
-    startTime
-  });
+  saveProgress({ completed: false, currentLevel, currentQ, score, startTime });
 
   let html = `<div class="question-box"><h3>${level.title}</h3><p style="font-size:1.12rem; margin-top:8px;">${q.q}</p></div>`;
 
@@ -545,8 +545,7 @@ function showQuestion() {
           <h4>放到對應的說明上</h4>
           <div id="drop-targets"></div>
         </div>
-      </div>
-    `;
+      </div>`;
     area.innerHTML = html;
     renderDragMatch(q);
   } else {
@@ -745,7 +744,7 @@ function renderLeaderboard() {
     const tr = document.createElement("tr");
     let rankClass = i === 0 ? "rank-1" : i === 1 ? "rank-2" : i === 2 ? "rank-3" : "";
     tr.innerHTML = `
-      <td class="${rankClass}">${i + 1}</td>
+      <td class="${rankClass}">${i+1}</td>
       <td>${r.email}</td>
       <td><strong>${r.score}</strong></td>
       <td><span class="time-used">${r.timeUsed}</span></td>
