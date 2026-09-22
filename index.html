@@ -58,6 +58,8 @@
   .btn-green { background: #28a745; }
   .btn-green:hover { background: #218838; }
   .btn-orange { background: #fd7e14; }
+  .btn-red { background: #dc3545; }
+  .btn-red:hover { background: #c82333; }
   .score-box {
     background: #f8f9fa;
     border-radius: 12px;
@@ -200,6 +202,17 @@
     font-size: 0.95rem;
     color: #555;
   }
+  .admin-panel {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .admin-panel h3 {
+    color: #856404;
+    margin-bottom: 10px;
+  }
 </style>
 </head>
 <body>
@@ -245,6 +258,14 @@
       <p id="rank-text" style="margin-bottom:18px;"></p>
     </div>
 
+    <!-- 管理員專用面板 -->
+    <div id="admin-panel" class="admin-panel" style="display:none;">
+      <h3>管理員功能（kiehosocial@gmail.com）</h3>
+      <p style="margin-bottom:12px; color:#856404;">你可以查看與重置本機所有成績</p>
+      <button class="btn btn-green" onclick="copyAllScores()">複製所有成績</button>
+      <button class="btn btn-red" onclick="resetAllScores()">清除所有成績（重置）</button>
+    </div>
+
     <h3 style="text-align:center; margin-bottom:10px;">本機排行榜</h3>
     <div class="leaderboard">
       <table>
@@ -262,7 +283,7 @@
     </div>
 
     <div class="center" style="margin-top:16px;">
-      <button class="btn btn-green" onclick="copyAllScores()">複製所有成績</button>
+      <button class="btn btn-green" id="normal-copy-btn" onclick="copyAllScores()">複製所有成績</button>
       <button class="btn btn-orange" onclick="signOut()">登出</button>
     </div>
 
@@ -271,7 +292,7 @@
       <p><strong>五大組成：</strong>硬件、軟件、數據、人、程序</p>
       <p><strong>數據 vs 資訊：</strong>數據是原始事實，資訊是處理後有意義的結果</p>
       <p><strong>IPO：</strong>輸入 → 處理 → 輸出</p>
-      <p><strong>數據驗證：</strong>Garbage In, Garbage Out。常見方法包括存在檢查、範圍檢查、類型檢查、格式檢查、長度檢查、清單檢查等。</p>
+      <p><strong>數據驗證：</strong>Garbage In, Garbage Out。常見方法：存在檢查、範圍檢查、類型檢查、格式檢查、長度檢查、清單檢查。</p>
     </div>
   </div>
 </div>
@@ -281,8 +302,9 @@
 const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.googleusercontent.com";
 // ========================================================
 
-const STORAGE_KEY = "is_game_progress_v14";
-const LEADERBOARD_KEY = "is_game_leaderboard_v14";
+const ADMIN_EMAIL = "kiehosocial@gmail.com";   // 管理員帳號
+const STORAGE_KEY = "is_game_progress_v15";
+const LEADERBOARD_KEY = "is_game_leaderboard_v15";
 
 const levelsTemplate = [
   {
@@ -336,81 +358,20 @@ const levelsTemplate = [
   {
     title: "第5關：數據驗證（重點加強）",
     questions: [
-      {
-        type: "mc",
-        q: "如果在網上預約時填寫了錯誤的證件號碼，最可能發生什麼事？",
-        options: ["預約仍然有效", "預約可能無效或需要重新預約", "系統會自動修正號碼", "不會有任何影響"],
-        answer: 1,
-        explain: "錯誤資料會導致預約無效。"
-      },
-      {
-        type: "mc",
-        q: "「Garbage In, Garbage Out」的意思是？",
-        options: ["輸入垃圾會得到垃圾輸出", "電腦會自動清理垃圾資料", "輸出品質與輸入無關", "只能輸入文字"],
-        answer: 0,
-        explain: "輸入的準確性直接影響輸出品質。"
-      },
-      {
-        type: "mc",
-        q: "檢查使用者是否有填寫必填欄位，這種驗證方法稱為？",
-        options: ["範圍檢查", "存在檢查（Presence Check）", "格式檢查", "類型檢查"],
-        answer: 1,
-        explain: "存在檢查用來確認資料有被輸入。"
-      },
-      {
-        type: "mc",
-        q: "限制年齡必須介於 1 到 120 之間，這是哪一種驗證？",
-        options: ["存在檢查", "範圍檢查（Range Check）", "格式檢查", "長度檢查"],
-        answer: 1,
-        explain: "範圍檢查限制數值的上下限。"
-      },
-      {
-        type: "mc",
-        q: "要求電話號碼必須是數字，這是哪一種驗證？",
-        options: ["存在檢查", "範圍檢查", "類型檢查（Type Check）", "清單檢查"],
-        answer: 2,
-        explain: "類型檢查確認資料類型是否正確。"
-      },
-      {
-        type: "mc",
-        q: "要求電郵地址必須包含 @ 符號，這是哪一種驗證？",
-        options: ["存在檢查", "範圍檢查", "格式檢查（Format Check）", "長度檢查"],
-        answer: 2,
-        explain: "格式檢查確認資料符合特定格式。"
-      },
-      {
-        type: "mc",
-        q: "限制密碼長度必須在 8 到 16 個字元之間，這是？",
-        options: ["存在檢查", "範圍檢查", "格式檢查", "長度檢查（Length Check）"],
-        answer: 3,
-        explain: "長度檢查限制字元數量。"
-      },
-      {
-        type: "mc",
-        q: "性別只能選擇「男」或「女」，這是哪一種驗證？",
-        options: ["存在檢查", "範圍檢查", "類型檢查", "清單檢查（List / Lookup Check）"],
-        answer: 3,
-        explain: "清單檢查限制只能從預設選項中選擇。"
-      },
-      {
-        type: "mc",
-        q: "設計表單時，下列哪項最有助於減少無效輸入？",
-        options: ["讓使用者自由輸入任何內容", "提供下拉選單、提示文字或即時檢查", "完全不給提示", "只接受英文"],
-        answer: 1,
-        explain: "良好的介面設計可有效減少錯誤輸入。"
-      },
-      {
-        type: "mc",
-        q: "賽跑計時時把 12\"62 錯誤輸入成 12\"26，最後排名出錯，這說明了什麼？",
-        options: ["電腦計算能力不足", "無用輸入會導致無用輸出", "只是顯示問題", "與數據驗證無關"],
-        answer: 1,
-        explain: "典型的 Garbage In, Garbage Out 例子。"
-      }
+      { type: "mc", q: "如果在網上預約時填寫了錯誤的證件號碼，最可能發生什麼事？", options: ["預約仍然有效", "預約可能無效或需要重新預約", "系統會自動修正號碼", "不會有任何影響"], answer: 1, explain: "錯誤資料會導致預約無效。" },
+      { type: "mc", q: "「Garbage In, Garbage Out」的意思是？", options: ["輸入垃圾會得到垃圾輸出", "電腦會自動清理垃圾資料", "輸出品質與輸入無關", "只能輸入文字"], answer: 0, explain: "輸入的準確性直接影響輸出品質。" },
+      { type: "mc", q: "檢查使用者是否有填寫必填欄位，這種驗證方法稱為？", options: ["範圍檢查", "存在檢查（Presence Check）", "格式檢查", "類型檢查"], answer: 1, explain: "存在檢查用來確認資料有被輸入。" },
+      { type: "mc", q: "限制年齡必須介於 1 到 120 之間，這是哪一種驗證？", options: ["存在檢查", "範圍檢查（Range Check）", "格式檢查", "長度檢查"], answer: 1, explain: "範圍檢查限制數值的上下限。" },
+      { type: "mc", q: "要求電話號碼必須是數字，這是哪一種驗證？", options: ["存在檢查", "範圍檢查", "類型檢查（Type Check）", "清單檢查"], answer: 2, explain: "類型檢查確認資料類型是否正確。" },
+      { type: "mc", q: "要求電郵地址必須包含 @ 符號，這是哪一種驗證？", options: ["存在檢查", "範圍檢查", "格式檢查（Format Check）", "長度檢查"], answer: 2, explain: "格式檢查確認資料符合特定格式。" },
+      { type: "mc", q: "限制密碼長度必須在 8 到 16 個字元之間，這是？", options: ["存在檢查", "範圍檢查", "格式檢查", "長度檢查（Length Check）"], answer: 3, explain: "長度檢查限制字元數量。" },
+      { type: "mc", q: "性別只能選擇「男」或「女」，這是哪一種驗證？", options: ["存在檢查", "範圍檢查", "類型檢查", "清單檢查（List / Lookup Check）"], answer: 3, explain: "清單檢查限制只能從預設選項中選擇。" },
+      { type: "mc", q: "設計表單時，下列哪項最有助於減少無效輸入？", options: ["讓使用者自由輸入任何內容", "提供下拉選單、提示文字或即時檢查", "完全不給提示", "只接受英文"], answer: 1, explain: "良好的介面設計可有效減少錯誤輸入。" },
+      { type: "mc", q: "賽跑計時時把 12\"62 錯誤輸入成 12\"26，最後排名出錯，這說明了什麼？", options: ["電腦計算能力不足", "無用輸入會導致無用輸出", "只是顯示問題", "與數據驗證無關"], answer: 1, explain: "典型的 Garbage In, Garbage Out 例子。" }
     ]
   }
 ];
 
-// 計分（滿分約 100）
 const MATCH_FULL_SCORE = 16;
 const MATCH_PARTIAL = 3;
 const MC_SCORE = 4;
@@ -426,6 +387,7 @@ let canAnswer = false;
 let draggedItem = null;
 let placedCount = 0;
 let isMatchChecked = false;
+let isAdmin = false;
 
 function shuffleArray(arr) {
   const a = [...arr];
@@ -465,9 +427,12 @@ function saveProgress(data) {
 function handleCredentialResponse(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   userEmail = payload.email;
+  isAdmin = (userEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase());
 
   const progress = getProgress();
-  if (progress && progress.completed) {
+
+  // 管理員可以直接進入，不強制完成限制
+  if (!isAdmin && progress && progress.completed) {
     document.getElementById("login-status").innerHTML = 
       `<p style="color:#c0392b; margin-top:16px;">此 Google 帳號已經完成過測驗，無法再次作答。</p>`;
     return;
@@ -475,11 +440,11 @@ function handleCredentialResponse(response) {
 
   document.getElementById("login-screen").classList.remove("active");
   document.getElementById("game-screen").classList.add("active");
-  document.getElementById("display-email").textContent = userEmail;
+  document.getElementById("display-email").textContent = userEmail + (isAdmin ? "（管理員）" : "");
 
   prepareLevels();
 
-  if (progress && !progress.completed) {
+  if (progress && !progress.completed && !isAdmin) {
     currentLevel = progress.currentLevel || 0;
     currentQ = progress.currentQ || 0;
     score = progress.score || 0;
@@ -489,7 +454,9 @@ function handleCredentialResponse(response) {
     currentQ = 0;
     score = 0;
     startTime = Date.now();
-    saveProgress({ completed: false, currentLevel: 0, currentQ: 0, score: 0, startTime });
+    if (!isAdmin) {
+      saveProgress({ completed: false, currentLevel: 0, currentQ: 0, score: 0, startTime });
+    }
   }
 
   updateScore();
@@ -530,7 +497,9 @@ function showQuestion() {
   isMatchChecked = false;
   placedCount = 0;
 
-  saveProgress({ completed: false, currentLevel, currentQ, score, startTime });
+  if (!isAdmin) {
+    saveProgress({ completed: false, currentLevel, currentQ, score, startTime });
+  }
 
   let html = `<div class="question-box"><h3>${level.title}</h3><p style="font-size:1.12rem; margin-top:8px;">${q.q}</p></div>`;
 
@@ -697,30 +666,41 @@ function endGame() {
   const timeStr = formatTime(elapsedSeconds);
   if (score > 100) score = 100;
 
-  saveProgress({
-    completed: true,
-    score,
-    timeUsed: timeStr,
-    finishTime: new Date().toLocaleString("zh-TW")
-  });
+  if (!isAdmin) {
+    saveProgress({
+      completed: true,
+      score,
+      timeUsed: timeStr,
+      finishTime: new Date().toLocaleString("zh-TW")
+    });
 
-  const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
-  records.push({
-    email: userEmail,
-    score,
-    timeUsed: timeStr,
-    timeSeconds: elapsedSeconds,
-    finishTime: new Date().toLocaleString("zh-TW")
-  });
-  records.sort((a, b) => b.score - a.score || a.timeSeconds - b.timeSeconds);
-  if (records.length > 100) records.length = 100;
-  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(records));
+    const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+    records.push({
+      email: userEmail,
+      score,
+      timeUsed: timeStr,
+      timeSeconds: elapsedSeconds,
+      finishTime: new Date().toLocaleString("zh-TW")
+    });
+    records.sort((a, b) => b.score - a.score || a.timeSeconds - b.timeSeconds);
+    if (records.length > 100) records.length = 100;
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(records));
+  }
 
   document.getElementById("game-screen").classList.remove("active");
   document.getElementById("end-screen").classList.add("active");
   document.getElementById("final-score").textContent = score;
   document.getElementById("final-time").textContent = timeStr;
   document.getElementById("progress").style.width = "100%";
+
+  // 顯示管理員面板
+  if (isAdmin) {
+    document.getElementById("admin-panel").style.display = "block";
+    document.getElementById("normal-copy-btn").style.display = "none";
+  } else {
+    document.getElementById("admin-panel").style.display = "none";
+    document.getElementById("normal-copy-btn").style.display = "inline-block";
+  }
 
   let rankMsg = "";
   if (score >= 90) rankMsg = "太強了！你已經完全掌握相關概念！";
@@ -769,6 +749,16 @@ function copyAllScores() {
   }).catch(() => {
     prompt("請手動複製以下內容：", text);
   });
+}
+
+function resetAllScores() {
+  if (!confirm("確定要清除本機所有學生的成績與進度嗎？\n此操作無法復原！")) return;
+  
+  localStorage.removeItem(LEADERBOARD_KEY);
+  localStorage.removeItem(STORAGE_KEY);
+  
+  alert("已清除所有成績與進度！");
+  renderLeaderboard();
 }
 
 function signOut() {
