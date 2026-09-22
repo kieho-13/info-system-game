@@ -169,14 +169,8 @@
   .review-card h3 { color: #1a2a6c; margin-bottom: 6px; }
   .center { text-align: center; }
   .big-score { font-size: 2.8rem; font-weight: bold; color: #1a2a6c; margin: 12px 0; }
-  .timer {
-    font-size: 1.4rem;
-    font-weight: bold;
-    color: #dc3545;
-    margin: 10px 0;
-  }
   .leaderboard {
-    max-height: 340px;
+    max-height: 380px;
     overflow-y: auto;
     margin-top: 15px;
   }
@@ -212,7 +206,7 @@
 <div class="container">
   <header>
     <h1>資訊系統複習遊戲</h1>
-    <p>Google 帳號登入</p>
+    <p>Google 帳號登入　｜　滿分 100 分</p>
   </header>
   <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
@@ -233,7 +227,7 @@
   <div class="screen" id="game-screen">
     <div class="center">
       <div class="score-box">
-        <span id="display-email">-</span>　｜　分數：<span id="score">0</span>　｜　關卡 <span id="level-num">1</span>/5
+        <span id="display-email">-</span>　｜　分數：<span id="score">0</span> / 100　｜　關卡 <span id="level-num">1</span>/5
       </div>
     </div>
     <div id="question-area"></div>
@@ -246,12 +240,12 @@
   <div class="screen" id="end-screen">
     <div class="center">
       <h2>遊戲結束！</h2>
-      <div class="big-score"><span id="final-score">0</span> 分</div>
+      <div class="big-score"><span id="final-score">0</span> / 100</div>
       <p style="font-size:1.2rem; margin-bottom:8px;">用時：<span id="final-time" class="time-used">--</span></p>
       <p id="rank-text" style="margin-bottom:18px;"></p>
     </div>
 
-    <h3 style="text-align:center; margin-bottom:10px;">即時排行榜（本機）</h3>
+    <h3 style="text-align:center; margin-bottom:10px;">本機排行榜</h3>
     <div class="leaderboard">
       <table>
         <thead>
@@ -267,16 +261,17 @@
       </table>
     </div>
 
+    <div class="center" style="margin-top:16px;">
+      <button class="btn btn-green" onclick="copyAllScores()">複製所有成績</button>
+      <button class="btn btn-orange" onclick="signOut()">登出</button>
+    </div>
+
     <div class="review-card" style="margin-top:20px;">
       <h3>重點複習卡</h3>
       <p><strong>五大組成：</strong>硬件、軟件、數據、人、程序（互相依賴）</p>
       <p><strong>數據 vs 資訊：</strong>數據是原始事實，資訊是處理後有意義的結果</p>
       <p><strong>IPO：</strong>輸入 → 處理 → 輸出</p>
-      <p><strong>數據驗證：</strong>Garbage In, Garbage Out（無用輸入，無用輸出）。輸入的準確性決定輸出品質。</p>
-    </div>
-
-    <div class="center" style="margin-top:20px;">
-      <button class="btn btn-orange" onclick="signOut()">登出</button>
+      <p><strong>數據驗證：</strong>Garbage In, Garbage Out（無用輸入，無用輸出）</p>
     </div>
   </div>
 </div>
@@ -286,10 +281,10 @@
 const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.googleusercontent.com";
 // ========================================================
 
-const STORAGE_KEY = "is_game_progress_v11";
-const LEADERBOARD_KEY = "is_game_leaderboard_v11";
+const STORAGE_KEY = "is_game_progress_v13";
+const LEADERBOARD_KEY = "is_game_leaderboard_v13";
 
-// 題庫（已加入數據驗證關卡）
+// 題庫
 const levelsTemplate = [
   {
     title: "第1關：資訊系統組成部分",
@@ -399,6 +394,11 @@ const levelsTemplate = [
   }
 ];
 
+// 計分設定（滿分 100）
+const MATCH_FULL_SCORE = 20;
+const MATCH_PARTIAL = 4;
+const MC_SCORE = 4;
+
 // 遊戲狀態
 let levels = [];
 let currentLevel = 0;
@@ -406,11 +406,8 @@ let currentQ = 0;
 let score = 0;
 let totalQuestions = 0;
 let userEmail = "";
-let userName = "";
 let startTime = null;
-let liveTimerInterval = null;
 let canAnswer = false;
-let countdownTimer = null;
 let draggedItem = null;
 let placedCount = 0;
 let isMatchChecked = false;
@@ -453,7 +450,6 @@ function saveProgress(data) {
 function handleCredentialResponse(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   userEmail = payload.email;
-  userName = payload.name || payload.email;
 
   const progress = getProgress();
 
@@ -489,7 +485,6 @@ function handleCredentialResponse(response) {
   }
 
   updateScore();
-  startLiveTimer();
   showQuestion();
 }
 
@@ -513,14 +508,6 @@ function initGoogle() {
 
 window.onload = initGoogle;
 
-function startLiveTimer() {
-  liveTimerInterval = setInterval(() => {}, 1000);
-}
-
-function stopLiveTimer() {
-  if (liveTimerInterval) clearInterval(liveTimerInterval);
-}
-
 function updateScore() {
   document.getElementById("score").textContent = score;
   document.getElementById("level-num").textContent = currentLevel + 1;
@@ -533,10 +520,9 @@ function showQuestion() {
   const q = level.questions[currentQ];
   const area = document.getElementById("question-area");
   document.getElementById("next-btn").style.display = "none";
-  canAnswer = false;
+  canAnswer = true;
   isMatchChecked = false;
   placedCount = 0;
-  if (countdownTimer) clearInterval(countdownTimer);
 
   saveProgress({
     completed: false,
@@ -567,7 +553,6 @@ function showQuestion() {
     let shuffled = q.options.map((text, originalIndex) => ({ text, originalIndex }));
     shuffled = shuffleArray(shuffled);
 
-    html += `<div class="center timer" id="countdown">請等待 5 秒後作答...</div>`;
     html += `<div class="options" id="options-container"></div>`;
     html += `<div class="feedback" id="feedback"></div>`;
     area.innerHTML = html;
@@ -575,27 +560,12 @@ function showQuestion() {
     const container = document.getElementById("options-container");
     shuffled.forEach((opt) => {
       const div = document.createElement("div");
-      div.className = "option disabled";
+      div.className = "option";
       div.textContent = opt.text;
       div.dataset.originalIndex = opt.originalIndex;
       div.onclick = () => selectOption(div, opt.originalIndex);
       container.appendChild(div);
     });
-
-    let sec = 5;
-    const cd = document.getElementById("countdown");
-    countdownTimer = setInterval(() => {
-      sec--;
-      if (sec > 0) {
-        cd.textContent = `請等待 ${sec} 秒後作答...`;
-      } else {
-        clearInterval(countdownTimer);
-        cd.textContent = "可以開始作答！";
-        cd.style.color = "#28a745";
-        canAnswer = true;
-        document.querySelectorAll("#options-container .option").forEach(o => o.classList.remove("disabled"));
-      }
-    }, 1000);
   }
 }
 
@@ -679,7 +649,8 @@ function checkMatchAnswers(q) {
       zone.classList.add("wrong");
     }
   });
-  score += (correctCount === q.pairs.length) ? 20 : correctCount * 4;
+  score += (correctCount === q.pairs.length) ? MATCH_FULL_SCORE : correctCount * MATCH_PARTIAL;
+  if (score > 100) score = 100;
   updateScore();
   document.getElementById("next-btn").style.display = "inline-block";
 }
@@ -695,7 +666,7 @@ function selectOption(el, originalIndex) {
     el.classList.add("correct");
     feedback.className = "feedback show correct";
     feedback.textContent = "✓ 正確！" + (q.explain || "");
-    score += 10;
+    score += MC_SCORE;
   } else {
     el.classList.add("wrong");
     options.forEach(o => {
@@ -704,6 +675,7 @@ function selectOption(el, originalIndex) {
     feedback.className = "feedback show wrong";
     feedback.textContent = "✗ 錯誤。" + (q.explain || "");
   }
+  if (score > 100) score = 100;
   updateScore();
   document.getElementById("next-btn").style.display = "inline-block";
 }
@@ -722,9 +694,9 @@ function nextQuestion() {
 }
 
 function endGame() {
-  stopLiveTimer();
   const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
   const timeStr = formatTime(elapsedSeconds);
+  if (score > 100) score = 100;
 
   saveProgress({
     completed: true,
@@ -742,7 +714,7 @@ function endGame() {
     finishTime: new Date().toLocaleString("zh-TW")
   });
   records.sort((a, b) => b.score - a.score || a.timeSeconds - b.timeSeconds);
-  if (records.length > 50) records.length = 50;
+  if (records.length > 100) records.length = 100;
   localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(records));
 
   document.getElementById("game-screen").classList.remove("active");
@@ -752,9 +724,9 @@ function endGame() {
   document.getElementById("progress").style.width = "100%";
 
   let rankMsg = "";
-  if (score >= 150) rankMsg = "太強了！你已經完全掌握資訊系統與數據驗證概念！";
-  else if (score >= 110) rankMsg = "很不錯！再複習一下細節會更完美。";
-  else if (score >= 70) rankMsg = "及格了！建議再看一次重點複習卡。";
+  if (score >= 90) rankMsg = "太強了！你已經完全掌握相關概念！";
+  else if (score >= 70) rankMsg = "很不錯！再複習一下細節會更完美。";
+  else if (score >= 50) rankMsg = "及格了！建議再看一次重點複習卡。";
   else rankMsg = "加油！多練習幾次就會進步。";
   document.getElementById("rank-text").textContent = rankMsg;
 
@@ -780,6 +752,23 @@ function renderLeaderboard() {
       <td style="font-size:0.85rem;">${r.finishTime}</td>
     `;
     tbody.appendChild(tr);
+  });
+}
+
+function copyAllScores() {
+  const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+  if (records.length === 0) {
+    alert("目前沒有任何成績紀錄");
+    return;
+  }
+  let text = "排名\t帳號\t分數\t用時\t完成時間\n";
+  records.forEach((r, i) => {
+    text += `${i+1}\t${r.email}\t${r.score}\t${r.timeUsed}\t${r.finishTime}\n`;
+  });
+  navigator.clipboard.writeText(text).then(() => {
+    alert("所有成績已複製到剪貼簿！可直接貼到 Excel。");
+  }).catch(() => {
+    prompt("請手動複製以下內容：", text);
   });
 }
 
