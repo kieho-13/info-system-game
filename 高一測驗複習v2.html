@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>資訊系統複習遊戲</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+    background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    color: #333;
+  }
+  .container {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 920px;
+    overflow: hidden;
+  }
+  header {
+    background: #1a2a6c;
+    color: white;
+    padding: 16px 22px;
+    text-align: center;
+  }
+  header h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  header p { font-size: 0.9rem; opacity: 0.9; }
+  .progress-bar { height: 8px; background: #e0e0e0; }
+  .progress-fill {
+    height: 100%;
+    background: #fdbb2d;
+    width: 0%;
+    transition: width 0.4s;
+  }
+  .screen { display: none; padding: 25px 22px; min-height: 520px; }
+  .screen.active { display: block; }
+  .btn {
+    background: #1a2a6c;
+    color: white;
+    border: none;
+    padding: 12px 26px;
+    border-radius: 30px;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: 0.2s;
+    margin: 6px 4px;
+  }
+  .btn:hover { background: #2a3a8c; transform: translateY(-2px); }
+  .btn:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+  .btn-green { background: #28a745; }
+  .btn-green:hover { background: #218838; }
+  .btn-orange { background: #fd7e14; }
+  .score-box {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 10px 18px;
+    display: inline-block;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+  .question-box {
+    background: #f1f5ff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 18px;
+    border-left: 6px solid #1a2a6c;
+  }
+  .options { display: grid; gap: 11px; }
+  .option {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    padding: 13px 16px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 1.05rem;
+  }
+  .option:hover:not(.disabled) { border-color: #1a2a6c; background: #eef2ff; }
+  .option.disabled { opacity: 0.55; cursor: not-allowed; }
+  .option.correct { border-color: #28a745; background: #d4edda; }
+  .option.wrong { border-color: #dc3545; background: #f8d7da; }
+  .feedback {
+    margin-top: 14px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    display: none;
+    font-weight: 500;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: #d4edda; color: #155724; }
+  .feedback.wrong { background: #f8d7da; color: #721c24; }
+
+  .match-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 15px;
+  }
+  @media (max-width: 650px) {
+    .match-container { grid-template-columns: 1fr; }
+  }
+  .match-column h4 {
+    text-align: center;
+    margin-bottom: 12px;
+    color: #1a2a6c;
+  }
+  .draggable-item {
+    background: #eef2ff;
+    padding: 14px 12px;
+    border-radius: 12px;
+    text-align: center;
+    cursor: grab;
+    border: 2px solid #c5d0f0;
+    font-weight: 500;
+    margin-bottom: 10px;
+    transition: 0.2s;
+    user-select: none;
+  }
+  .draggable-item:active { cursor: grabbing; }
+  .draggable-item.dragging {
+    opacity: 0.5;
+    border: 2px dashed #1a2a6c;
+  }
+  .draggable-item.placed { display: none; }
+  .drop-zone {
+    background: #f8f9fa;
+    padding: 14px 12px;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px dashed #bbb;
+    margin-bottom: 10px;
+    min-height: 52px;
+    transition: 0.2s;
+  }
+  .drop-zone.drag-over {
+    background: #e3f2fd;
+    border-color: #1a2a6c;
+    border-style: solid;
+  }
+  .drop-zone.correct {
+    background: #d4edda;
+    border-color: #28a745;
+    border-style: solid;
+  }
+  .drop-zone.wrong {
+    background: #f8d7da;
+    border-color: #dc3545;
+    border-style: solid;
+  }
+  .drop-zone .placed-text { font-weight: 600; color: #333; }
+  .drop-zone.correct .placed-text { color: #155724; }
+  .drop-zone.wrong .placed-text { color: #721c24; }
+
+  .review-card {
+    background: #fff8e6;
+    border-radius: 14px;
+    padding: 16px;
+    margin: 10px 0;
+    border-left: 5px solid #fdbb2d;
+  }
+  .review-card h3 { color: #1a2a6c; margin-bottom: 6px; }
+  .center { text-align: center; }
+  .big-score { font-size: 2.8rem; font-weight: bold; color: #1a2a6c; margin: 12px 0; }
+  .timer {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #dc3545;
+    margin: 10px 0;
+  }
+  .input-group {
+    margin: 18px 0;
+    text-align: left;
+  }
+  .input-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 1.1rem;
+  }
+  .leaderboard {
+    max-height: 340px;
+    overflow-y: auto;
+    margin-top: 15px;
+  }
+  .leaderboard table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .leaderboard th, .leaderboard td {
+    padding: 11px 8px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+  }
+  .leaderboard th { background: #1a2a6c; color: white; position: sticky; top: 0; }
+  .leaderboard tr:nth-child(even) { background: #f8f9fa; }
+  .rank-1 { color: #f1c40f; font-weight: bold; }
+  .rank-2 { color: #95a5a6; font-weight: bold; }
+  .rank-3 { color: #cd7f32; font-weight: bold; }
+  .time-used {
+    font-weight: bold;
+    color: #1a2a6c;
+    background: #e8f0fe;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .user-info {
+    margin-top: 12px;
+    font-size: 0.95rem;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>資訊系統複習遊戲</h1>
+    <p>Google 帳號登入</p>
+  </header>
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+  <!-- 登入畫面 -->
+  <div class="screen active" id="login-screen">
+    <div class="center">
+      <h2 style="margin-bottom:16px;">請使用 Google 帳號登入</h2>
+      <p style="margin-bottom:24px; color:#555; line-height:1.6;">
+        每個 Google 帳號只能完成一次。<br>
+        若上次未完成，登入後會自動繼續。
+      </p>
+      <div id="google-btn-container" style="display:flex; justify-content:center;"></div>
+      <div class="user-info" id="login-status"></div>
+    </div>
+  </div>
+
+  <!-- 遊戲畫面 -->
+  <div class="screen" id="game-screen">
+    <div class="center">
+      <div class="score-box">
+        <span id="display-email">-</span>　｜　分數：<span id="score">0</span>　｜　關卡 <span id="level-num">1</span>/4
+      </div>
+    </div>
+    <div id="question-area"></div>
+    <div class="center" style="margin-top:18px;">
+      <button class="btn" id="next-btn" style="display:none;" onclick="nextQuestion()">下一題</button>
+    </div>
+  </div>
+
+  <!-- 結束畫面 -->
+  <div class="screen" id="end-screen">
+    <div class="center">
+      <h2>遊戲結束！</h2>
+      <div class="big-score"><span id="final-score">0</span> 分</div>
+      <p style="font-size:1.2rem; margin-bottom:8px;">用時：<span id="final-time" class="time-used">--</span></p>
+      <p id="rank-text" style="margin-bottom:18px;"></p>
+    </div>
+
+    <h3 style="text-align:center; margin-bottom:10px;">即時排行榜（本機）</h3>
+    <div class="leaderboard">
+      <table>
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>帳號</th>
+            <th>分數</th>
+            <th>用時</th>
+            <th>完成時間</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+
+    <div class="review-card" style="margin-top:20px;">
+      <h3>重點複習卡</h3>
+      <p><strong>五大組成：</strong>硬件、軟件、數據、人、程序（互相依賴）</p>
+      <p><strong>數據 vs 資訊：</strong>數據是原始事實，資訊是處理後有意義的結果</p>
+      <p><strong>IPO：</strong>輸入 → 處理 → 輸出</p>
+    </div>
+
+    <div class="center" style="margin-top:20px;">
+      <button class="btn btn-orange" onclick="signOut()">登出</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 請把下面這行換成你的 Google Client ID ==========
+const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.googleusercontent.com";
+// ========================================================
+
+const STORAGE_KEY = "is_game_progress_v10";
+const LEADERBOARD_KEY = "is_game_leaderboard_v10";
+
+// 題庫
+const levelsTemplate = [
+  {
+    title: "第1關：資訊系統組成部分",
+    questions: [
+      {
+        type: "match",
+        q: "請把左邊的項目拖曳到右邊正確的說明上（全部放完後才會顯示對錯）",
+        pairs: [
+          { left: "硬件", right: "資訊系統中的物理裝置" },
+          { left: "軟件", right: "資訊系統中執行的程式" },
+          { left: "數據", right: "儲存並被程式使用的原始資料" },
+          { left: "人", right: "系統的使用者與管理者" },
+          { left: "程序", right: "將數據轉化為資訊的規則與流程" }
+        ]
+      },
+      {
+        type: "mc",
+        q: "情境：圖書館用條碼掃描器掃描書本並記錄借出時間。條碼掃描器屬於？",
+        options: ["硬件", "軟件", "數據", "程序"],
+        answer: 0,
+        explain: "掃描器是實體裝置，屬於硬件。"
+      },
+      {
+        type: "mc",
+        q: "老師用 Excel 計算全班平均分。Excel 屬於？",
+        options: ["硬件", "軟件", "數據", "人"],
+        answer: 1,
+        explain: "Excel 是應用程式，屬於軟件。"
+      },
+      {
+        type: "mc",
+        q: "管理員設定「逾期超過7天不能再借書」的規則。這屬於？",
+        options: ["硬件", "軟件", "數據", "程序"],
+        answer: 3,
+        explain: "規則與處理流程屬於程序。"
+      }
+    ]
+  },
+  {
+    title: "第2關：數據與資訊的區別",
+    questions: [
+      { type: "mc", q: "「某公司的淨收入」屬於？", options: ["數據", "資訊"], answer: 0, explain: "淨收入是原始數字，屬於數據。" },
+      { type: "mc", q: "「公司淨收入成長率」屬於？", options: ["數據", "資訊"], answer: 1, explain: "成長率是經過計算後的結果，屬於資訊。" },
+      { type: "mc", q: "「高一班學生身高列表」屬於？", options: ["數據", "資訊"], answer: 0, explain: "原始身高數字是數據。" },
+      { type: "mc", q: "「高一班最高學生的姓名」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過排序比較後得出的結果是資訊。" },
+      { type: "mc", q: "「一張真實的貓咪照片」屬於？", options: ["數據", "資訊"], answer: 0, explain: "原始影像是數據。" },
+      { type: "mc", q: "「真實照片中的貓的數量」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過影像辨識後得到的數量是資訊。" }
+    ]
+  },
+  {
+    title: "第3關：IPO 循環",
+    questions: [
+      { type: "mc", q: "IPO 循環的正確順序是？", options: ["處理 → 輸入 → 輸出", "輸入 → 處理 → 輸出", "輸出 → 處理 → 輸入", "輸入 → 輸出 → 處理"], answer: 1, explain: "標準流程是輸入 → 處理 → 輸出。" },
+      { type: "mc", q: "在成績管理系統中，學生把考試分數鍵入電腦，這個動作屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 0, explain: "把資料送進系統的動作屬於輸入階段。" },
+      { type: "mc", q: "系統自動計算全班平均分，並製成長條圖，這個過程屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 1, explain: "計算與產生圖表屬於處理階段。" },
+      { type: "mc", q: "把整理好的成績報表列印出來交給老師，這個動作屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 2, explain: "把結果呈現給使用者屬於輸出階段。" }
+    ]
+  },
+  {
+    title: "第4關：綜合挑戰",
+    questions: [
+      { type: "mc", q: "如果一個資訊系統缺少「程序」，會發生什麼事？", options: ["硬體無法啟動", "無法將數據轉成有用資訊", "沒有人可以使用", "軟件會自動消失"], answer: 1, explain: "程序定義如何處理數據，缺少它就無法產生有意義的資訊。" },
+      { type: "mc", q: "「數據一定是數字」這句話正確嗎？", options: ["正確", "錯誤"], answer: 1, explain: "錯誤。文字、圖片、聲音等也是數據。" },
+      { type: "mc", q: "在學校的成績系統中，「負責維護系統並設定使用權限的老師」最接近哪一個組成部分？", options: ["硬件", "軟件", "人", "數據"], answer: 2, explain: "負責管理與使用系統的人員屬於「人」。" },
+      { type: "mc", q: "「人」在資訊系統中的角色是？", options: ["只負責鍵入資料", "使用者和管理者", "只負責寫程式", "可有可無"], answer: 1, explain: "人是系統的使用者與管理者，非常重要。" }
+    ]
+  }
+];
+
+// 遊戲狀態
+let levels = [];
+let currentLevel = 0;
+let currentQ = 0;
+let score = 0;
+let totalQuestions = 0;
+let userEmail = "";
+let userName = "";
+let startTime = null;
+let liveTimerInterval = null;
+let canAnswer = false;
+let countdownTimer = null;
+let draggedItem = null;
+let placedCount = 0;
+let isMatchChecked = false;
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function prepareLevels() {
+  // 每一關的題目都隨機打亂
+  levels = levelsTemplate.map(level => ({
+    title: level.title,
+    questions: shuffleArray(level.questions)
+  }));
+  totalQuestions = 0;
+  levels.forEach(l => totalQuestions += l.questions.length);
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function getProgress() {
+  const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  return all[userEmail] || null;
+}
+
+function saveProgress(data) {
+  const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  all[userEmail] = data;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+}
+
+function handleCredentialResponse(response) {
+  // 解析 JWT（僅前端使用，非正式安全驗證）
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  userEmail = payload.email;
+  userName = payload.name || payload.email;
+
+  const progress = getProgress();
+
+  if (progress && progress.completed) {
+    document.getElementById("login-status").innerHTML = 
+      `<p style="color:#c0392b; margin-top:16px;">此 Google 帳號已經完成過測驗，無法再次作答。</p>`;
+    return;
+  }
+
+  // 開始或繼續
+  document.getElementById("login-screen").classList.remove("active");
+  document.getElementById("game-screen").classList.add("active");
+  document.getElementById("display-email").textContent = userEmail;
+
+  prepareLevels();
+
+  if (progress && !progress.completed) {
+    // 繼續上次進度
+    currentLevel = progress.currentLevel || 0;
+    currentQ = progress.currentQ || 0;
+    score = progress.score || 0;
+    startTime = progress.startTime || Date.now();
+  } else {
+    currentLevel = 0;
+    currentQ = 0;
+    score = 0;
+    startTime = Date.now();
+    saveProgress({
+      completed: false,
+      currentLevel: 0,
+      currentQ: 0,
+      score: 0,
+      startTime: startTime
+    });
+  }
+
+  updateScore();
+  startLiveTimer();
+  showQuestion();
+}
+
+function initGoogle() {
+  if (GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")) {
+    document.getElementById("login-status").innerHTML = 
+      `<p style="color:#c0392b;">請先在程式碼中設定正確的 Google Client ID</p>`;
+    return;
+  }
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredentialResponse
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById("google-btn-container"),
+    { theme: "outline", size: "large", text: "signin_with", shape: "rectangular" }
+  );
+}
+
+window.onload = initGoogle;
+
+function startLiveTimer() {
+  liveTimerInterval = setInterval(() => {}, 1000);
+}
+
+function stopLiveTimer() {
+  if (liveTimerInterval) clearInterval(liveTimerInterval);
+}
+
+function updateScore() {
+  document.getElementById("score").textContent = score;
+  document.getElementById("level-num").textContent = currentLevel + 1;
+  const progress = ((currentLevel * 10 + currentQ) / totalQuestions) * 100;
+  document.getElementById("progress").style.width = Math.min(progress, 100) + "%";
+}
+
+function showQuestion() {
+  const level = levels[currentLevel];
+  const q = level.questions[currentQ];
+  const area = document.getElementById("question-area");
+  document.getElementById("next-btn").style.display = "none";
+  canAnswer = false;
+  isMatchChecked = false;
+  placedCount = 0;
+  if (countdownTimer) clearInterval(countdownTimer);
+
+  // 儲存目前進度
+  saveProgress({
+    completed: false,
+    currentLevel,
+    currentQ,
+    score,
+    startTime
+  });
+
+  let html = `<div class="question-box"><h3>${level.title}</h3><p style="font-size:1.12rem; margin-top:8px;">${q.q}</p></div>`;
+
+  if (q.type === "match") {
+    html += `
+      <div class="match-container">
+        <div class="match-column">
+          <h4>拖曳這裡的項目 →</h4>
+          <div id="drag-source"></div>
+        </div>
+        <div class="match-column">
+          <h4>放到對應的說明上</h4>
+          <div id="drop-targets"></div>
+        </div>
+      </div>
+    `;
+    area.innerHTML = html;
+    renderDragMatch(q);
+  } else {
+    // 選項隨機打亂
+    let shuffled = q.options.map((text, originalIndex) => ({ text, originalIndex }));
+    shuffled = shuffleArray(shuffled);
+
+    html += `<div class="center timer" id="countdown">請等待 5 秒後作答...</div>`;
+    html += `<div class="options" id="options-container"></div>`;
+    html += `<div class="feedback" id="feedback"></div>`;
+    area.innerHTML = html;
+
+    const container = document.getElementById("options-container");
+    shuffled.forEach((opt) => {
+      const div = document.createElement("div");
+      div.className = "option disabled";
+      div.textContent = opt.text;
+      div.dataset.originalIndex = opt.originalIndex;
+      div.onclick = () => selectOption(div, opt.originalIndex);
+      container.appendChild(div);
+    });
+
+    let sec = 5;
+    const cd = document.getElementById("countdown");
+    countdownTimer = setInterval(() => {
+      sec--;
+      if (sec > 0) {
+        cd.textContent = `請等待 ${sec} 秒後作答...`;
+      } else {
+        clearInterval(countdownTimer);
+        cd.textContent = "可以開始作答！";
+        cd.style.color = "#28a745";
+        canAnswer = true;
+        document.querySelectorAll("#options-container .option").forEach(o => o.classList.remove("disabled"));
+      }
+    }, 1000);
+  }
+}
+
+function renderDragMatch(q) {
+  const source = document.getElementById("drag-source");
+  const targets = document.getElementById("drop-targets");
+  source.innerHTML = "";
+  targets.innerHTML = "";
+  placedCount = 0;
+  isMatchChecked = false;
+
+  q.pairs.forEach((p) => {
+    const div = document.createElement("div");
+    div.className = "draggable-item";
+    div.textContent = p.left;
+    div.draggable = true;
+    div.dataset.left = p.left;
+
+    div.addEventListener("dragstart", (e) => {
+      if (isMatchChecked) { e.preventDefault(); return; }
+      draggedItem = div;
+      div.classList.add("dragging");
+      e.dataTransfer.setData("text/plain", p.left);
+    });
+    div.addEventListener("dragend", () => {
+      div.classList.remove("dragging");
+      draggedItem = null;
+    });
+    source.appendChild(div);
+  });
+
+  const shuffled = shuffleArray(q.pairs);
+  shuffled.forEach((p) => {
+    const zone = document.createElement("div");
+    zone.className = "drop-zone";
+    zone.dataset.correct = p.right;
+    zone.dataset.placed = "";
+    zone.innerHTML = `<span class="placeholder">${p.right}</span>`;
+
+    zone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      if (!isMatchChecked) zone.classList.add("drag-over");
+    });
+    zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+    zone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      zone.classList.remove("drag-over");
+      if (isMatchChecked || !draggedItem) return;
+
+      const draggedLeft = draggedItem.dataset.left;
+      if (zone.dataset.placed) {
+        const oldLeft = zone.dataset.placed;
+        const oldItem = document.querySelector(`.draggable-item[data-left="${oldLeft}"]`);
+        if (oldItem) {
+          oldItem.classList.remove("placed");
+          placedCount--;
+        }
+      }
+      zone.dataset.placed = draggedLeft;
+      zone.innerHTML = `<span class="placed-text">${draggedLeft}</span><br><small style="color:#666">${p.right}</small>`;
+      draggedItem.classList.add("placed");
+      placedCount++;
+
+      if (placedCount === q.pairs.length) checkMatchAnswers(q);
+    });
+    targets.appendChild(zone);
+  });
+}
+
+function checkMatchAnswers(q) {
+  isMatchChecked = true;
+  let correctCount = 0;
+  document.querySelectorAll(".drop-zone").forEach(zone => {
+    const placedLeft = zone.dataset.placed;
+    const correctRight = zone.dataset.correct;
+    const pair = q.pairs.find(pr => pr.left === placedLeft);
+    if (pair && pair.right === correctRight) {
+      zone.classList.add("correct");
+      correctCount++;
+    } else {
+      zone.classList.add("wrong");
+    }
+  });
+  score += (correctCount === q.pairs.length) ? 20 : correctCount * 4;
+  updateScore();
+  document.getElementById("next-btn").style.display = "inline-block";
+}
+
+function selectOption(el, originalIndex) {
+  if (!canAnswer || el.classList.contains("correct") || el.classList.contains("wrong")) return;
+  const q = levels[currentLevel].questions[currentQ];
+  const options = document.querySelectorAll("#options-container .option");
+  options.forEach(o => o.style.pointerEvents = "none");
+
+  const feedback = document.getElementById("feedback");
+  if (originalIndex === q.answer) {
+    el.classList.add("correct");
+    feedback.className = "feedback show correct";
+    feedback.textContent = "✓ 正確！" + (q.explain || "");
+    score += 10;
+  } else {
+    el.classList.add("wrong");
+    options.forEach(o => {
+      if (parseInt(o.dataset.originalIndex) === q.answer) o.classList.add("correct");
+    });
+    feedback.className = "feedback show wrong";
+    feedback.textContent = "✗ 錯誤。" + (q.explain || "");
+  }
+  updateScore();
+  document.getElementById("next-btn").style.display = "inline-block";
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= levels[currentLevel].questions.length) {
+    currentLevel++;
+    currentQ = 0;
+    if (currentLevel >= levels.length) {
+      endGame();
+      return;
+    }
+  }
+  showQuestion();
+}
+
+function endGame() {
+  stopLiveTimer();
+  const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+  const timeStr = formatTime(elapsedSeconds);
+
+  // 標記為已完成
+  saveProgress({
+    completed: true,
+    score,
+    timeUsed: timeStr,
+    finishTime: new Date().toLocaleString("zh-TW")
+  });
+
+  // 寫入排行榜
+  const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+  records.push({
+    email: userEmail,
+    score,
+    timeUsed: timeStr,
+    timeSeconds: elapsedSeconds,
+    finishTime: new Date().toLocaleString("zh-TW")
+  });
+  records.sort((a, b) => b.score - a.score || a.timeSeconds - b.timeSeconds);
+  if (records.length > 50) records.length = 50;
+  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(records));
+
+  document.getElementById("game-screen").classList.remove("active");
+  document.getElementById("end-screen").classList.add("active");
+  document.getElementById("final-score").textContent = score;
+  document.getElementById("final-time").textContent = timeStr;
+  document.getElementById("progress").style.width = "100%";
+
+  let rankMsg = "";
+  if (score >= 130) rankMsg = "太強了！你已經完全掌握資訊系統概念！";
+  else if (score >= 90) rankMsg = "很不錯！再複習一下細節會更完美。";
+  else if (score >= 50) rankMsg = "及格了！建議再看一次重點複習卡。";
+  else rankMsg = "加油！多練習幾次就會進步。";
+  document.getElementById("rank-text").textContent = rankMsg;
+
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+  const tbody = document.getElementById("leaderboard-body");
+  tbody.innerHTML = "";
+  if (records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">尚無紀錄</td></tr>`;
+    return;
+  }
+  records.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    let rankClass = i === 0 ? "rank-1" : i === 1 ? "rank-2" : i === 2 ? "rank-3" : "";
+    tr.innerHTML = `
+      <td class="${rankClass}">${i + 1}</td>
+      <td>${r.email}</td>
+      <td><strong>${r.score}</strong></td>
+      <td><span class="time-used">${r.timeUsed}</span></td>
+      <td style="font-size:0.85rem;">${r.finishTime}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function signOut() {
+  location.reload();
+}
+</script>
+</body>
+</html>
