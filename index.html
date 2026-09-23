@@ -99,7 +99,6 @@
   .feedback.show { display: block; }
   .feedback.correct { background: #d4edda; color: #155724; }
   .feedback.wrong { background: #f8d7da; color: #721c24; }
-
   .match-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -160,7 +159,6 @@
   .drop-zone .placed-text { font-weight: 600; color: #333; }
   .drop-zone.correct .placed-text { color: #155724; }
   .drop-zone.wrong .placed-text { color: #721c24; }
-
   .review-card {
     background: #fff8e6;
     border-radius: 14px;
@@ -228,7 +226,10 @@
 
     <div class="center">
       <div class="score-box">
-        <span id="display-email">-</span>　｜　分數：<span id="score">0</span> / 100　｜　關卡 <span id="level-num">1</span>/5
+        <span id="display-email">-</span>　｜　
+        分數：<span id="score">0</span> / 100　｜　
+        關卡 <span id="level-num">1</span>/5　｜　
+        已完成 <span id="completed-count">0</span> / <span id="total-count">0</span> 題
       </div>
     </div>
     <div id="question-area"></div>
@@ -246,7 +247,6 @@
       <p id="rank-text" style="margin-bottom:18px;"></p>
       <button class="btn btn-orange" onclick="signOut()">登出</button>
     </div>
-
     <div class="review-card" style="margin-top:20px;">
       <h3>重點複習卡</h3>
       <p><strong>五大組成：</strong>硬件、軟件、數據、人、程序</p>
@@ -263,7 +263,7 @@ const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.go
 // ========================================================
 
 const ADMIN_EMAIL = "kiehosocial@gmail.com";
-const STORAGE_KEY = "is_game_progress_v18";
+const STORAGE_KEY = "is_game_progress_v19";
 
 const levelsTemplate = [
   {
@@ -334,15 +334,14 @@ const levelsTemplate = [
       { type: "mc", q: "限制密碼長度必須在 8 到 16 個字元之間，這是？", options: ["完整性檢查", "範圍檢查", "格式檢查", "長度檢查"], answer: 3, explain: "長度檢查限制字元數量。" },
       { type: "mc", q: "性別只能選擇「男」或「女」，這是哪一種驗證？", options: ["完整性檢查", "範圍檢查", "類型檢查", "固定數值檢查"], answer: 3, explain: "固定數值檢查限制只能從預設選項中選擇。" },
       { type: "mc", q: "設計表單時，下列哪項最有助於減少無效輸入？", options: ["讓使用者自由輸入任何內容", "提供下拉選單、提示文字或即時檢查", "完全不給提示", "只接受英文"], answer: 1, explain: "良好的介面設計可有效減少錯誤輸入。" },
-      { type: "mc", q: "賽跑計時時把 12\"62 錯誤輸入成 12\"26，最後排名出錯，這說明了什麼？", options: ["電腦計算能力不足", "無用輸入會導致無用輸出", "只是顯示問題", "與數據驗證無關"], answer: 1, explain: "典型的無用輸入，無用輸出（Garbage In, Garbage Out）例子。" },
+      { type: "mc", q: "賽跑計時時把 12\"62 錯誤輸入成 12\"26，最後排名出錯，這說明了什麼？", options: ["電腦計算能力不足", "無用輸入會導致無用輸出", "只是顯示問題", "與數據驗證無關"], answer: 1, explain: "典型的無用輸入，無用輸出例子。" },
       { type: "mc", q: "以下哪一種情況最適合使用「範圍檢查」？", options: ["檢查姓名是否有填寫", "檢查分數是否在 0 到 100 之間", "檢查電郵是否有 @", "檢查密碼是否夠長"], answer: 1, explain: "範圍檢查用來限制數值的上下限。" },
       { type: "mc", q: "為什麼數據驗證很重要？", options: ["可以讓網頁更好看", "確保輸入資料正確，避免產生錯誤輸出", "可以加快電腦速度", "只是增加表單欄位"], answer: 1, explain: "正確的輸入才能得到正確的輸出。" },
-      { type: "mc", q: "如果系統沒有做數據驗證，最可能發生什麼問題？", options: ["網頁無法開啟", "產生錯誤或無用的輸出結果", "電腦會死機", "軟件會自動更新"], answer: 1, explain: "沒有驗證就容易出現無用輸入，無用輸出（Garbage In, Garbage Out）的情況。" }
+      { type: "mc", q: "如果系統沒有做數據驗證，最可能發生什麼問題？", options: ["網頁無法開啟", "產生錯誤或無用的輸出結果", "電腦會死機", "軟件會自動更新"], answer: 1, explain: "沒有驗證就容易出現無用輸入，無用輸出的情況。" }
     ]
   }
 ];
 
-// 計分設定（盡量接近滿分 100）
 const MATCH_FULL_SCORE = 12;
 const MATCH_PARTIAL = 2;
 const MC_SCORE = 3;
@@ -393,6 +392,15 @@ function saveProgress(data) {
   const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
   all[userEmail] = data;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+}
+
+function getCompletedCount() {
+  let completed = 0;
+  for (let i = 0; i < currentLevel; i++) {
+    completed += levels[i].questions.length;
+  }
+  completed += currentQ;
+  return completed;
 }
 
 function handleCredentialResponse(response) {
@@ -458,7 +466,10 @@ window.onload = initGoogle;
 function updateScore() {
   document.getElementById("score").textContent = score;
   document.getElementById("level-num").textContent = currentLevel + 1;
-  const progress = ((currentLevel * 10 + currentQ) / totalQuestions) * 100;
+  document.getElementById("total-count").textContent = totalQuestions;
+  document.getElementById("completed-count").textContent = getCompletedCount();
+  
+  const progress = (getCompletedCount() / totalQuestions) * 100;
   document.getElementById("progress").style.width = Math.min(progress, 100) + "%";
 }
 
@@ -474,6 +485,8 @@ function showQuestion() {
   if (!isAdmin) {
     saveProgress({ completed: false, currentLevel, currentQ, score, startTime });
   }
+
+  updateScore(); // 更新已完成題數
 
   let html = `<div class="question-box"><h3>${level.title}</h3><p style="font-size:1.12rem; margin-top:8px;">${q.q}</p></div>`;
 
