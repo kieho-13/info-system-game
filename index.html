@@ -171,32 +171,6 @@
   .review-card h3 { color: #1a2a6c; margin-bottom: 6px; }
   .center { text-align: center; }
   .big-score { font-size: 2.8rem; font-weight: bold; color: #1a2a6c; margin: 12px 0; }
-  .leaderboard {
-    max-height: 380px;
-    overflow-y: auto;
-    margin-top: 15px;
-  }
-  .leaderboard table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .leaderboard th, .leaderboard td {
-    padding: 11px 8px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
-  }
-  .leaderboard th { background: #1a2a6c; color: white; position: sticky; top: 0; }
-  .leaderboard tr:nth-child(even) { background: #f8f9fa; }
-  .rank-1 { color: #f1c40f; font-weight: bold; }
-  .rank-2 { color: #95a5a6; font-weight: bold; }
-  .rank-3 { color: #cd7f32; font-weight: bold; }
-  .time-used {
-    font-weight: bold;
-    color: #1a2a6c;
-    background: #e8f0fe;
-    padding: 3px 8px;
-    border-radius: 6px;
-  }
   .user-info {
     margin-top: 12px;
     font-size: 0.95rem;
@@ -214,6 +188,13 @@
     color: #856404;
     margin-bottom: 8px;
     font-size: 1.1rem;
+  }
+  .time-used {
+    font-weight: bold;
+    color: #1a2a6c;
+    background: #e8f0fe;
+    padding: 3px 8px;
+    border-radius: 6px;
   }
 </style>
 </head>
@@ -240,12 +221,9 @@
 
   <!-- 遊戲畫面 -->
   <div class="screen" id="game-screen">
-    <!-- 管理員面板（登入後立刻顯示） -->
     <div id="admin-panel-game" class="admin-panel" style="display:none;">
       <h3>管理員功能（kiehosocial@gmail.com）</h3>
-      <button class="btn btn-green" onclick="copyAllScores()">複製所有成績</button>
-      <button class="btn btn-red" onclick="resetAllScores()">清除所有成績</button>
-      <button class="btn btn-orange" onclick="goToLeaderboard()">查看排行榜</button>
+      <button class="btn btn-red" onclick="resetMyProgress()">重置我的進度</button>
     </div>
 
     <div class="center">
@@ -266,31 +244,6 @@
       <div class="big-score"><span id="final-score">0</span> / 100</div>
       <p style="font-size:1.2rem; margin-bottom:8px;">用時：<span id="final-time" class="time-used">--</span></p>
       <p id="rank-text" style="margin-bottom:18px;"></p>
-    </div>
-
-    <div id="admin-panel-end" class="admin-panel" style="display:none;">
-      <h3>管理員功能</h3>
-      <button class="btn btn-green" onclick="copyAllScores()">複製所有成績</button>
-      <button class="btn btn-red" onclick="resetAllScores()">清除所有成績</button>
-    </div>
-
-    <h3 style="text-align:center; margin-bottom:10px;">本機排行榜</h3>
-    <div class="leaderboard">
-      <table>
-        <thead>
-          <tr>
-            <th>排名</th>
-            <th>帳號</th>
-            <th>分數</th>
-            <th>用時</th>
-            <th>完成時間</th>
-          </tr>
-        </thead>
-        <tbody id="leaderboard-body"></tbody>
-      </table>
-    </div>
-
-    <div class="center" style="margin-top:16px;">
       <button class="btn btn-orange" onclick="signOut()">登出</button>
     </div>
 
@@ -310,8 +263,7 @@ const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.go
 // ========================================================
 
 const ADMIN_EMAIL = "kiehosocial@gmail.com";
-const STORAGE_KEY = "is_game_progress_v16";
-const LEADERBOARD_KEY = "is_game_leaderboard_v16";
+const STORAGE_KEY = "is_game_progress_v18";
 
 const levelsTemplate = [
   {
@@ -330,7 +282,9 @@ const levelsTemplate = [
       },
       { type: "mc", q: "圖書館用條碼掃描器掃描書本。條碼掃描器屬於？", options: ["硬件", "軟件", "數據", "程序"], answer: 0, explain: "掃描器是實體裝置，屬於硬件。" },
       { type: "mc", q: "老師用 Excel 計算全班平均分。Excel 屬於？", options: ["硬件", "軟件", "數據", "人"], answer: 1, explain: "Excel 是應用程式，屬於軟件。" },
-      { type: "mc", q: "管理員設定「逾期超過7天不能再借書」的規則。這屬於？", options: ["硬件", "軟件", "數據", "程序"], answer: 3, explain: "規則與處理流程屬於程序。" }
+      { type: "mc", q: "管理員設定「逾期超過7天不能再借書」的規則。這屬於？", options: ["硬件", "軟件", "數據", "程序"], answer: 3, explain: "規則與處理流程屬於程序。" },
+      { type: "mc", q: "滑鼠、鍵盤、螢幕這些設備統稱為？", options: ["軟件", "硬件", "程序", "數據"], answer: 1, explain: "這些都是實體裝置，屬於硬件。" },
+      { type: "mc", q: "作業系統（如 Windows、macOS）屬於資訊系統的哪個部分？", options: ["硬件", "軟件", "數據", "人"], answer: 1, explain: "作業系統是系統軟件。" }
     ]
   },
   {
@@ -341,7 +295,9 @@ const levelsTemplate = [
       { type: "mc", q: "「高一班學生身高列表」屬於？", options: ["數據", "資訊"], answer: 0, explain: "原始身高數字是數據。" },
       { type: "mc", q: "「高一班最高學生的姓名」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過比較後得出的結果是資訊。" },
       { type: "mc", q: "「一張真實的貓咪照片」屬於？", options: ["數據", "資訊"], answer: 0, explain: "原始影像是數據。" },
-      { type: "mc", q: "「真實照片中的貓的數量」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過辨識後得到的數量是資訊。" }
+      { type: "mc", q: "「真實照片中的貓的數量」屬於？", options: ["數據", "資訊"], answer: 1, explain: "經過辨識後得到的數量是資訊。" },
+      { type: "mc", q: "以下哪一項是「資訊」而不是「數據」？", options: ["今天氣溫 28°C", "本週平均氣溫比上週高 2°C", "學生的考試分數列表", "原始銷售記錄"], answer: 1, explain: "經過比較計算後的結果才是資訊。" },
+      { type: "mc", q: "數據經過處理後變成有意義的內容，稱為？", options: ["硬件", "軟件", "資訊", "程序"], answer: 2, explain: "處理後有意義的結果就是資訊。" }
     ]
   },
   {
@@ -350,7 +306,9 @@ const levelsTemplate = [
       { type: "mc", q: "IPO 循環的正確順序是？", options: ["處理 → 輸入 → 輸出", "輸入 → 處理 → 輸出", "輸出 → 處理 → 輸入", "輸入 → 輸出 → 處理"], answer: 1, explain: "標準流程是輸入 → 處理 → 輸出。" },
       { type: "mc", q: "學生把考試分數鍵入電腦，這個動作屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 0, explain: "把資料送進系統屬於輸入階段。" },
       { type: "mc", q: "系統計算全班平均分並製成長條圖，這屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 1, explain: "計算與產生圖表屬於處理階段。" },
-      { type: "mc", q: "把成績報表列印出來交給老師，這屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 2, explain: "把結果呈現給使用者屬於輸出階段。" }
+      { type: "mc", q: "把成績報表列印出來交給老師，這屬於哪個階段？", options: ["輸入", "處理", "輸出"], answer: 2, explain: "把結果呈現給使用者屬於輸出階段。" },
+      { type: "mc", q: "超市店員用掃瞄器讀取商品條碼，這主要屬於 IPO 的哪個階段？", options: ["輸入", "處理", "輸出"], answer: 0, explain: "讀取條碼是把資料輸入系統。" },
+      { type: "mc", q: "電腦自動計算商品總價並顯示在螢幕上，其中「計算總價」屬於？", options: ["輸入", "處理", "輸出"], answer: 1, explain: "計算是處理階段。" }
     ]
   },
   {
@@ -359,7 +317,9 @@ const levelsTemplate = [
       { type: "mc", q: "如果一個資訊系統缺少「程序」，會發生什麼事？", options: ["硬體無法啟動", "無法將數據轉成有用資訊", "沒有人可以使用", "軟件會自動消失"], answer: 1, explain: "程序定義如何處理數據。" },
       { type: "mc", q: "「數據一定是數字」這句話正確嗎？", options: ["正確", "錯誤"], answer: 1, explain: "錯誤。文字、圖片、聲音等也是數據。" },
       { type: "mc", q: "負責維護系統並設定權限的老師，最接近哪個組成部分？", options: ["硬件", "軟件", "人", "數據"], answer: 2, explain: "屬於「人」。" },
-      { type: "mc", q: "「人」在資訊系統中的角色是？", options: ["只負責鍵入資料", "使用者和管理者", "只負責寫程式", "可有可無"], answer: 1, explain: "人是使用者與管理者。" }
+      { type: "mc", q: "「人」在資訊系統中的角色是？", options: ["只負責鍵入資料", "使用者和管理者", "只負責寫程式", "可有可無"], answer: 1, explain: "人是使用者與管理者。" },
+      { type: "mc", q: "以下哪個不是資訊系統的基本組成部分？", options: ["硬件", "軟件", "網路速度", "程序"], answer: 2, explain: "網路速度不是五大基本組成之一。" },
+      { type: "mc", q: "資訊系統中，負責「決定如何處理數據」的是？", options: ["硬件", "軟件", "程序", "數據"], answer: 2, explain: "程序定義處理的規則與流程。" }
     ]
   },
   {
@@ -374,14 +334,18 @@ const levelsTemplate = [
       { type: "mc", q: "限制密碼長度必須在 8 到 16 個字元之間，這是？", options: ["存在檢查", "範圍檢查", "格式檢查", "長度檢查（Length Check）"], answer: 3, explain: "長度檢查限制字元數量。" },
       { type: "mc", q: "性別只能選擇「男」或「女」，這是哪一種驗證？", options: ["存在檢查", "範圍檢查", "類型檢查", "清單檢查（List / Lookup Check）"], answer: 3, explain: "清單檢查限制只能從預設選項中選擇。" },
       { type: "mc", q: "設計表單時，下列哪項最有助於減少無效輸入？", options: ["讓使用者自由輸入任何內容", "提供下拉選單、提示文字或即時檢查", "完全不給提示", "只接受英文"], answer: 1, explain: "良好的介面設計可有效減少錯誤輸入。" },
-      { type: "mc", q: "賽跑計時時把 12\"62 錯誤輸入成 12\"26，最後排名出錯，這說明了什麼？", options: ["電腦計算能力不足", "無用輸入會導致無用輸出", "只是顯示問題", "與數據驗證無關"], answer: 1, explain: "典型的 Garbage In, Garbage Out 例子。" }
+      { type: "mc", q: "賽跑計時時把 12\"62 錯誤輸入成 12\"26，最後排名出錯，這說明了什麼？", options: ["電腦計算能力不足", "無用輸入會導致無用輸出", "只是顯示問題", "與數據驗證無關"], answer: 1, explain: "典型的 Garbage In, Garbage Out 例子。" },
+      { type: "mc", q: "以下哪一種情況最適合使用「範圍檢查」？", options: ["檢查姓名是否有填寫", "檢查分數是否在 0 到 100 之間", "檢查電郵是否有 @", "檢查密碼是否夠長"], answer: 1, explain: "範圍檢查用來限制數值的上下限。" },
+      { type: "mc", q: "為什麼數據驗證很重要？", options: ["可以讓網頁更好看", "確保輸入資料正確，避免產生錯誤輸出", "可以加快電腦速度", "只是增加表單欄位"], answer: 1, explain: "正確的輸入才能得到正確的輸出。" },
+      { type: "mc", q: "如果系統沒有做數據驗證，最可能發生什麼問題？", options: ["網頁無法開啟", "產生錯誤或無用的輸出結果", "電腦會死機", "軟件會自動更新"], answer: 1, explain: "沒有驗證就容易出現 Garbage In, Garbage Out 的情況。" }
     ]
   }
 ];
 
-const MATCH_FULL_SCORE = 16;
-const MATCH_PARTIAL = 3;
-const MC_SCORE = 4;
+// 計分設定（盡量接近滿分 100）
+const MATCH_FULL_SCORE = 12;
+const MATCH_PARTIAL = 2;
+const MC_SCORE = 3;
 
 let levels = [];
 let currentLevel = 0;
@@ -448,7 +412,6 @@ function handleCredentialResponse(response) {
   document.getElementById("game-screen").classList.add("active");
   document.getElementById("display-email").textContent = userEmail + (isAdmin ? "（管理員）" : "");
 
-  // 立刻顯示管理員面板
   if (isAdmin) {
     document.getElementById("admin-panel-game").style.display = "block";
   }
@@ -684,18 +647,6 @@ function endGame() {
       timeUsed: timeStr,
       finishTime: new Date().toLocaleString("zh-TW")
     });
-
-    const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
-    records.push({
-      email: userEmail,
-      score,
-      timeUsed: timeStr,
-      timeSeconds: elapsedSeconds,
-      finishTime: new Date().toLocaleString("zh-TW")
-    });
-    records.sort((a, b) => b.score - a.score || a.timeSeconds - b.timeSeconds);
-    if (records.length > 100) records.length = 100;
-    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(records));
   }
 
   document.getElementById("game-screen").classList.remove("active");
@@ -704,80 +655,19 @@ function endGame() {
   document.getElementById("final-time").textContent = timeStr;
   document.getElementById("progress").style.width = "100%";
 
-  if (isAdmin) {
-    document.getElementById("admin-panel-end").style.display = "block";
-  }
-
   let rankMsg = "";
   if (score >= 90) rankMsg = "太強了！你已經完全掌握相關概念！";
   else if (score >= 70) rankMsg = "很不錯！再複習一下細節會更完美。";
   else if (score >= 50) rankMsg = "及格了！建議再看一次重點複習卡。";
   else rankMsg = "加油！多練習幾次就會進步。";
   document.getElementById("rank-text").textContent = rankMsg;
-
-  renderLeaderboard();
 }
 
-function renderLeaderboard() {
-  const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
-  const tbody = document.getElementById("leaderboard-body");
-  tbody.innerHTML = "";
-  if (records.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">尚無紀錄</td></tr>`;
-    return;
-  }
-  records.forEach((r, i) => {
-    const tr = document.createElement("tr");
-    let rankClass = i === 0 ? "rank-1" : i === 1 ? "rank-2" : i === 2 ? "rank-3" : "";
-    tr.innerHTML = `
-      <td class="${rankClass}">${i+1}</td>
-      <td>${r.email}</td>
-      <td><strong>${r.score}</strong></td>
-      <td><span class="time-used">${r.timeUsed}</span></td>
-      <td style="font-size:0.85rem;">${r.finishTime}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function copyAllScores() {
-  const records = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
-  if (records.length === 0) {
-    alert("目前沒有任何成績紀錄");
-    return;
-  }
-  let text = "排名\t帳號\t分數\t用時\t完成時間\n";
-  records.forEach((r, i) => {
-    text += `${i+1}\t${r.email}\t${r.score}\t${r.timeUsed}\t${r.finishTime}\n`;
-  });
-  navigator.clipboard.writeText(text).then(() => {
-    alert("所有成績已複製到剪貼簿！可直接貼到 Excel。");
-  }).catch(() => {
-    prompt("請手動複製以下內容：", text);
-  });
-}
-
-function resetAllScores() {
-  if (!confirm("確定要清除本機所有學生的成績與進度嗎？\n此操作無法復原！")) return;
-  
-  localStorage.removeItem(LEADERBOARD_KEY);
+function resetMyProgress() {
+  if (!confirm("確定要重置目前的進度嗎？")) return;
   localStorage.removeItem(STORAGE_KEY);
-  
-  alert("已清除所有成績與進度！");
-  renderLeaderboard();
-}
-
-function goToLeaderboard() {
-  // 直接跳到結束畫面查看排行榜
-  document.getElementById("game-screen").classList.remove("active");
-  document.getElementById("end-screen").classList.add("active");
-  document.getElementById("final-score").textContent = "-";
-  document.getElementById("final-time").textContent = "--";
-  document.getElementById("rank-text").textContent = "管理員查看模式";
-  if (isAdmin) {
-    document.getElementById("admin-panel-end").style.display = "block";
-  }
-  renderLeaderboard();
+  alert("進度已重置，請重新整理頁面。");
+  location.reload();
 }
 
 function signOut() {
