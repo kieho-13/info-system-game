@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>資訊系統複習遊戲</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -46,20 +45,16 @@
     background: #1a2a6c;
     color: white;
     border: none;
-    padding: 12px 26px;
+    padding: 12px 28px;
     border-radius: 30px;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     cursor: pointer;
     transition: 0.2s;
     margin: 6px 4px;
   }
   .btn:hover { background: #2a3a8c; transform: translateY(-2px); }
-  .btn:disabled { background: #aaa; cursor: not-allowed; transform: none; }
-  .btn-green { background: #28a745; }
-  .btn-green:hover { background: #218838; }
   .btn-orange { background: #fd7e14; }
-  .btn-red { background: #dc3545; }
-  .btn-red:hover { background: #c82333; }
+  .btn-orange:hover { background: #e8590c; }
   .score-box {
     background: #f8f9fa;
     border-radius: 12px;
@@ -85,8 +80,7 @@
     transition: 0.2s;
     font-size: 1.05rem;
   }
-  .option:hover:not(.disabled) { border-color: #1a2a6c; background: #eef2ff; }
-  .option.disabled { opacity: 0.55; cursor: not-allowed; }
+  .option:hover { border-color: #1a2a6c; background: #eef2ff; }
   .option.correct { border-color: #28a745; background: #d4edda; }
   .option.wrong { border-color: #dc3545; background: #f8d7da; }
   .feedback {
@@ -99,6 +93,7 @@
   .feedback.show { display: block; }
   .feedback.correct { background: #d4edda; color: #155724; }
   .feedback.wrong { background: #f8d7da; color: #721c24; }
+
   .match-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -159,6 +154,7 @@
   .drop-zone .placed-text { font-weight: 600; color: #333; }
   .drop-zone.correct .placed-text { color: #155724; }
   .drop-zone.wrong .placed-text { color: #721c24; }
+
   .review-card {
     background: #fff8e6;
     border-radius: 14px;
@@ -169,24 +165,6 @@
   .review-card h3 { color: #1a2a6c; margin-bottom: 6px; }
   .center { text-align: center; }
   .big-score { font-size: 2.8rem; font-weight: bold; color: #1a2a6c; margin: 12px 0; }
-  .user-info {
-    margin-top: 12px;
-    font-size: 0.95rem;
-    color: #555;
-  }
-  .admin-panel {
-    background: #fff3cd;
-    border: 2px solid #ffc107;
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 18px;
-    text-align: center;
-  }
-  .admin-panel h3 {
-    color: #856404;
-    margin-bottom: 8px;
-    font-size: 1.1rem;
-  }
   .time-used {
     font-weight: bold;
     color: #1a2a6c;
@@ -200,33 +178,27 @@
 <div class="container">
   <header>
     <h1>資訊系統複習遊戲</h1>
-    <p>Google 帳號登入　｜　滿分 100 分</p>
+    <p>滿分 100 分</p>
   </header>
   <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
-  <!-- 登入畫面 -->
-  <div class="screen active" id="login-screen">
+  <!-- 開始畫面 -->
+  <div class="screen active" id="start-screen">
     <div class="center">
-      <h2 style="margin-bottom:16px;">請使用 Google 帳號登入</h2>
-      <p style="margin-bottom:24px; color:#555; line-height:1.6;">
-        每個 Google 帳號只能完成一次。<br>
-        若上次未完成，登入後會自動繼續。
+      <h2 style="margin-bottom:16px;">資訊系統複習遊戲</h2>
+      <p style="margin-bottom:24px; color:#555; line-height:1.7;">
+        本遊戲共有 5 個關卡，涵蓋：<br>
+        資訊系統組成部分、數據與資訊、IPO 循環、<br>
+        綜合挑戰、數據驗證
       </p>
-      <div id="google-btn-container" style="display:flex; justify-content:center;"></div>
-      <div class="user-info" id="login-status"></div>
+      <button class="btn" onclick="startGame()">開始遊戲</button>
     </div>
   </div>
 
   <!-- 遊戲畫面 -->
   <div class="screen" id="game-screen">
-    <div id="admin-panel-game" class="admin-panel" style="display:none;">
-      <h3>管理員功能（kiehosocial@gmail.com）</h3>
-      <button class="btn btn-red" onclick="resetMyProgress()">重置我的進度</button>
-    </div>
-
     <div class="center">
       <div class="score-box">
-        <span id="display-email">-</span>　｜　
         分數：<span id="score">0</span> / 100　｜　
         關卡 <span id="level-num">1</span>/5　｜　
         已完成 <span id="completed-count">0</span> / <span id="total-count">0</span> 題
@@ -245,7 +217,7 @@
       <div class="big-score"><span id="final-score">0</span> / 100</div>
       <p style="font-size:1.2rem; margin-bottom:8px;">用時：<span id="final-time" class="time-used">--</span></p>
       <p id="rank-text" style="margin-bottom:18px;"></p>
-      <button class="btn btn-orange" onclick="signOut()">登出</button>
+      <button class="btn btn-orange" onclick="restartGame()">再玩一次</button>
     </div>
     <div class="review-card" style="margin-top:20px;">
       <h3>重點複習卡</h3>
@@ -258,13 +230,6 @@
 </div>
 
 <script>
-// ========== 請把下面這行換成你的 Google Client ID ==========
-const GOOGLE_CLIENT_ID = "1082834002642-k3q225jc9ogd17b5ct636rotjthm3b2p.apps.googleusercontent.com";
-// ========================================================
-
-const ADMIN_EMAIL = "kiehosocial@gmail.com";
-const STORAGE_KEY = "is_game_progress_v19";
-
 const levelsTemplate = [
   {
     title: "第1關：資訊系統組成部分",
@@ -351,13 +316,11 @@ let currentLevel = 0;
 let currentQ = 0;
 let score = 0;
 let totalQuestions = 0;
-let userEmail = "";
 let startTime = null;
 let canAnswer = false;
 let draggedItem = null;
 let placedCount = 0;
 let isMatchChecked = false;
-let isAdmin = false;
 
 function shuffleArray(arr) {
   const a = [...arr];
@@ -383,17 +346,6 @@ function formatTime(seconds) {
   return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 }
 
-function getProgress() {
-  const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  return all[userEmail] || null;
-}
-
-function saveProgress(data) {
-  const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  all[userEmail] = data;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-}
-
 function getCompletedCount() {
   let completed = 0;
   for (let i = 0; i < currentLevel; i++) {
@@ -403,65 +355,19 @@ function getCompletedCount() {
   return completed;
 }
 
-function handleCredentialResponse(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
-  userEmail = payload.email;
-  isAdmin = (userEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase());
-
-  const progress = getProgress();
-
-  if (!isAdmin && progress && progress.completed) {
-    document.getElementById("login-status").innerHTML = 
-      `<p style="color:#c0392b; margin-top:16px;">此 Google 帳號已經完成過測驗，無法再次作答。</p>`;
-    return;
-  }
-
-  document.getElementById("login-screen").classList.remove("active");
-  document.getElementById("game-screen").classList.add("active");
-  document.getElementById("display-email").textContent = userEmail + (isAdmin ? "（管理員）" : "");
-
-  if (isAdmin) {
-    document.getElementById("admin-panel-game").style.display = "block";
-  }
-
+function startGame() {
   prepareLevels();
+  currentLevel = 0;
+  currentQ = 0;
+  score = 0;
+  startTime = Date.now();
 
-  if (progress && !progress.completed && !isAdmin) {
-    currentLevel = progress.currentLevel || 0;
-    currentQ = progress.currentQ || 0;
-    score = progress.score || 0;
-    startTime = progress.startTime || Date.now();
-  } else {
-    currentLevel = 0;
-    currentQ = 0;
-    score = 0;
-    startTime = Date.now();
-    if (!isAdmin) {
-      saveProgress({ completed: false, currentLevel: 0, currentQ: 0, score: 0, startTime });
-    }
-  }
+  document.getElementById("start-screen").classList.remove("active");
+  document.getElementById("game-screen").classList.add("active");
 
   updateScore();
   showQuestion();
 }
-
-function initGoogle() {
-  if (GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")) {
-    document.getElementById("login-status").innerHTML = 
-      `<p style="color:#c0392b;">請先在程式碼中設定正確的 Google Client ID</p>`;
-    return;
-  }
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleCredentialResponse
-  });
-  google.accounts.id.renderButton(
-    document.getElementById("google-btn-container"),
-    { theme: "outline", size: "large", text: "signin_with", shape: "rectangular" }
-  );
-}
-
-window.onload = initGoogle;
 
 function updateScore() {
   document.getElementById("score").textContent = score;
@@ -482,11 +388,7 @@ function showQuestion() {
   isMatchChecked = false;
   placedCount = 0;
 
-  if (!isAdmin) {
-    saveProgress({ completed: false, currentLevel, currentQ, score, startTime });
-  }
-
-  updateScore(); // 更新已完成題數
+  updateScore();
 
   let html = `<div class="question-box"><h3>${level.title}</h3><p style="font-size:1.12rem; margin-top:8px;">${q.q}</p></div>`;
 
@@ -653,15 +555,6 @@ function endGame() {
   const timeStr = formatTime(elapsedSeconds);
   if (score > 100) score = 100;
 
-  if (!isAdmin) {
-    saveProgress({
-      completed: true,
-      score,
-      timeUsed: timeStr,
-      finishTime: new Date().toLocaleString("zh-TW")
-    });
-  }
-
   document.getElementById("game-screen").classList.remove("active");
   document.getElementById("end-screen").classList.add("active");
   document.getElementById("final-score").textContent = score;
@@ -676,15 +569,10 @@ function endGame() {
   document.getElementById("rank-text").textContent = rankMsg;
 }
 
-function resetMyProgress() {
-  if (!confirm("確定要重置目前的進度嗎？")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  alert("進度已重置，請重新整理頁面。");
-  location.reload();
-}
-
-function signOut() {
-  location.reload();
+function restartGame() {
+  document.getElementById("end-screen").classList.remove("active");
+  document.getElementById("start-screen").classList.add("active");
+  document.getElementById("progress").style.width = "0%";
 }
 </script>
 </body>
